@@ -32,7 +32,7 @@ async function submit() {
     loading.value = false;
 
     if (!ok) {
-        errorMessage.value = "ログインIDまたはパスワードが正しくありません。";
+        errorMessage.value = "ログイン情報が間違っています。";
         password.value = "";
         return;
     }
@@ -43,33 +43,27 @@ async function submit() {
 </script>
 
 <template>
-    <div class="flex min-h-screen items-center justify-center bg-slate-100 px-6 py-12">
+    <div class="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12">
         <div class="w-full max-w-sm">
             <div class="flex flex-col items-center text-center">
-                <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm"><AppIcon name="link" :size="24" /></span>
-                <span class="mt-3 text-base font-semibold tracking-[0.2em] text-slate-900">CROSSWALK</span>
+                <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm">
+                    <AppIcon name="link" :size="24" />
+                </span>
+                <span class="mt-3 text-base font-semibold text-slate-900">Crosswalk</span>
                 <span class="mt-1 text-xs text-slate-500">商品識別子管理システム</span>
             </div>
 
             <div class="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h1 class="text-base font-semibold text-slate-900">ログイン</h1>
-                <p class="mt-1 text-xs text-slate-500">ログインIDとパスワードを入力してください。</p>
-
                 <BaseAlert v-if="errorMessage" tone="danger" class="mt-5">{{ errorMessage }}</BaseAlert>
 
-                <form class="mt-5 space-y-4" @submit.prevent="submit">
+                <form class="space-y-4" @submit.prevent="submit">
                     <BaseInput v-model="loginId" label="ログインID" placeholder="admin" required autocomplete="username" :error="fieldErrors.loginId" />
                     <BaseInput v-model="password" label="パスワード" type="password" placeholder="••••••••" required autocomplete="current-password" :error="fieldErrors.password" />
-                    <BaseButton type="submit" variant="primary" block :loading="loading">ログイン</BaseButton>
+                    <BaseButton type="submit" variant="primary" block :loading="loading"> ログイン </BaseButton>
                 </form>
             </div>
 
-            <div class="mt-4 rounded-lg border border-dashed border-slate-300 bg-white px-4 py-3">
-                <p class="text-[11px] font-semibold text-slate-500">UI確認用アカウント</p>
-                <p class="mt-1 font-mono text-xs text-slate-700">{{ DEMO_LOGIN_ID }} / {{ DEMO_PASSWORD }}</p>
-            </div>
-
-            <p class="mt-6 text-center text-[11px] text-slate-400">SCR-001 ログイン画面</p>
+            <p class="mt-5 text-center text-[11.5px] text-slate-400">SUNREEVE CO., LTD.</p>
         </div>
     </div>
 </template>

@@ -22,7 +22,7 @@ function isActive(name: string): boolean {
         <div class="flex h-16 items-center gap-2.5 border-b border-slate-200 px-5">
             <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500 text-white"><AppIcon name="link" :size="18" /></span>
             <span class="min-w-0">
-                <span class="block text-sm font-semibold tracking-[0.18em] text-slate-900">CROSSWALK</span>
+                <span class="block text-sm font-semibold text-slate-900">Crosswalk</span>
                 <span class="block truncate text-[10px] text-slate-400">商品識別子管理システム</span>
             </span>
         </div>
