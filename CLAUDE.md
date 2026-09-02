@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-This is **CROSSWALK** (商品識別子管理システム), a product-identifier management system. The full requirements are specified in [doc/要件定義書.md](doc/要件定義書.md) (Japanese) — read it before implementing any screen, API endpoint, or data model, since almost none of the application has been built yet.
+This is **Crosswalker** (商品識別子管理システム), a product-identifier management system. The full requirements are specified in [doc/要件定義書.md](doc/要件定義書.md) (Japanese) — read it before implementing any screen, API endpoint, or data model, since almost none of the application has been built yet.
 
 Current state:
 - **The Vue SPA front end is built, but runs entirely on mock data.** All 7 screens (SCR-001〜SCR-030) exist under `src/resources/js/views/`, with shared components in `src/resources/js/componets/` (note the existing directory-name typo) and `src/resources/js/layouts/`.

@@ -7,7 +7,6 @@ export const ITEMS_PER_PAGE = 10;
 export const NAV_ITEMS = [
     { name: "dashboard", label: "ダッシュボード", icon: "dashboard", screenId: "SCR-002" },
     { name: "items", label: "品番一覧", icon: "inventory_2", screenId: "SCR-010" },
-    { name: "item-create", label: "品番登録", icon: "add", screenId: "SCR-012" },
     { name: "csv-import", label: "CSV取込", icon: "csv", screenId: "SCR-020" },
     { name: "settings", label: "サイト設定", icon: "settings", screenId: "SCR-030" },
 ] as const;
