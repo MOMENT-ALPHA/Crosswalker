@@ -138,7 +138,7 @@ async function copyKey() {
                 :key="tab.key"
                 type="button"
                 class="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
-                :class="activeTab === tab.key ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                :class="activeTab === tab.key ? 'bg-primary-100 text-primary-700' : 'text-slate-600 hover:bg-primary-50 hover:text-primary-700'"
                 @click="activeTab = tab.key"
             >
                 <AppIcon :name="tab.icon" :size="16" />

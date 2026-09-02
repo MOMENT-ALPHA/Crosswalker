@@ -9,7 +9,7 @@ const ui = useUiStore();
 
 <template>
     <div class="flex min-h-screen bg-slate-50">
-        <div class="hidden lg:block"><AppSidebar /></div>
+        <div class="hidden lg:sticky lg:top-0 lg:block lg:h-dvh lg:self-start"><AppSidebar /></div>
 
         <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0" leave-active-class="transition duration-150" leave-to-class="opacity-0">
             <div v-if="ui.sidebarOpen" class="fixed inset-0 z-40 bg-slate-900/50 lg:hidden" @click="ui.closeSidebar()"></div>

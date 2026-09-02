@@ -18,7 +18,7 @@ function isActive(name: string): boolean {
 </script>
 
 <template>
-    <aside class="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-600">
+    <aside class="flex h-dvh w-64 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-600">
         <div class="flex h-16 items-center gap-2.5 border-b border-slate-200 px-5">
             <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500 text-white"><AppIcon name="link" :size="18" /></span>
             <span class="min-w-0">
