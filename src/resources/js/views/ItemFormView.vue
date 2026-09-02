@@ -9,7 +9,6 @@ import BaseCard from "@/componets/ui/BaseCard.vue";
 import BaseInput from "@/componets/ui/BaseInput.vue";
 import BaseModal from "@/componets/ui/BaseModal.vue";
 import BaseSelect from "@/componets/ui/BaseSelect.vue";
-import BaseTextarea from "@/componets/ui/BaseTextarea.vue";
 import { useCatalogStore } from "@/stores/catalog";
 import { useUiStore } from "@/stores/ui";
 import { createEmptySkuRow, toSelectOptions, uid } from "@/utils/helper";
@@ -233,9 +232,6 @@ function confirmDelete() {
                 <div class="md:col-span-4">
                     <BaseInput v-model="form.parent_asin" label="親ASIN" placeholder="B09T32PVM5" :error="errors.item.parent_asin" />
                 </div>
-                <div class="md:col-span-8">
-                    <BaseTextarea v-model="form.memo" label="メモ" :rows="3" placeholder="社内向けの補足情報" />
-                </div>
             </div>
         </BaseCard>
 
@@ -245,7 +241,7 @@ function confirmDelete() {
             </template>
 
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[1100px] text-sm">
+                <table class="w-full min-w-[900px] text-sm">
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs text-slate-500">
                             <th class="w-10 px-3 py-2.5 font-medium">#</th>
@@ -254,7 +250,6 @@ function confirmDelete() {
                             <th class="px-3 py-2.5 font-medium">TQ品番<span class="ml-1 text-rose-500">*</span></th>
                             <th class="px-3 py-2.5 font-medium">TQカラーNo<span class="ml-1 text-rose-500">*</span></th>
                             <th class="px-3 py-2.5 font-medium">TQサイズ<span class="ml-1 text-rose-500">*</span></th>
-                            <th class="px-3 py-2.5 font-medium">メモ</th>
                             <th class="w-12 px-3 py-2.5"></th>
                         </tr>
                     </thead>
@@ -266,7 +261,6 @@ function confirmDelete() {
                             <td class="px-3 py-2.5"><BaseInput v-model="row.tq_item_no" size="sm" placeholder="FISI05" :error="skuError(row.key, 'tq_item_no')" /></td>
                             <td class="px-3 py-2.5"><BaseInput v-model="row.tq_color_no" size="sm" placeholder="1" :error="skuError(row.key, 'tq_color_no')" /></td>
                             <td class="px-3 py-2.5"><BaseInput v-model="row.tq_size" size="sm" placeholder="10" :error="skuError(row.key, 'tq_size')" /></td>
-                            <td class="px-3 py-2.5"><BaseInput v-model="row.memo" size="sm" placeholder="ブラック +1.0" /></td>
                             <td class="px-3 py-2.5">
                                 <button
                                     type="button"

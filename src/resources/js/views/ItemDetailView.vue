@@ -62,21 +62,14 @@ function confirmDelete() {
             </div>
         </div>
 
-        <div class="grid gap-5 xl:grid-cols-3">
-            <BaseCard title="品番情報" class="xl:col-span-2">
-                <dl class="grid gap-x-6 gap-y-4 sm:grid-cols-3">
-                    <div v-for="detail in details" :key="detail.label">
-                        <dt class="text-xs text-slate-500">{{ detail.label }}</dt>
-                        <dd class="mt-1 text-sm text-slate-900" :class="detail.mono ? 'font-mono' : ''">{{ detail.value }}</dd>
-                    </div>
-                </dl>
-            </BaseCard>
-
-            <BaseCard title="メモ">
-                <p v-if="item.memo" class="text-sm leading-relaxed whitespace-pre-wrap text-slate-700">{{ item.memo }}</p>
-                <p v-else class="text-sm text-slate-400">メモは登録されていません。</p>
-            </BaseCard>
-        </div>
+        <BaseCard title="品番情報">
+            <dl class="grid gap-x-6 gap-y-4 sm:grid-cols-3">
+                <div v-for="detail in details" :key="detail.label">
+                    <dt class="text-xs text-slate-500">{{ detail.label }}</dt>
+                    <dd class="mt-1 text-sm text-slate-900" :class="detail.mono ? 'font-mono' : ''">{{ detail.value }}</dd>
+                </div>
+            </dl>
+        </BaseCard>
 
         <BaseCard title="SKU一覧" :description="`この品番に属するSKU ${item.skus.length}件`" :padded="false">
             <div v-if="item.skus.length > 0" class="overflow-x-auto">
@@ -89,7 +82,6 @@ function confirmDelete() {
                             <th class="px-5 py-2.5 font-medium">TQ品番</th>
                             <th class="px-5 py-2.5 font-medium">TQカラーNo</th>
                             <th class="px-5 py-2.5 font-medium">TQサイズ</th>
-                            <th class="px-5 py-2.5 font-medium">メモ</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -103,7 +95,6 @@ function confirmDelete() {
                             <td class="px-5 py-3 font-mono text-[13px] text-slate-700">{{ sku.tq_item_no }}</td>
                             <td class="px-5 py-3 font-mono text-[13px] text-slate-700">{{ sku.tq_color_no }}</td>
                             <td class="px-5 py-3 font-mono text-[13px] text-slate-700">{{ sku.tq_size }}</td>
-                            <td class="px-5 py-3 text-xs text-slate-500">{{ displayValue(sku.memo) }}</td>
                         </tr>
                     </tbody>
                 </table>

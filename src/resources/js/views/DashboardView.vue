@@ -64,7 +64,7 @@ const toneClass: Record<string, string> = {
             </template>
 
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[840px] text-sm">
+                <table class="w-full min-w-210 text-sm">
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs text-slate-500">
                             <th class="px-5 py-2.5 font-medium">品番コード</th>

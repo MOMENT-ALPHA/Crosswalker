@@ -144,7 +144,6 @@ function removeQuickFilter() {
                                 <RouterLink :to="{ name: 'item-detail', params: { id: row.id } }" class="font-mono text-[13px] font-medium text-primary-600 hover:underline">{{
                                     row.item_no
                                 }}</RouterLink>
-                                <p v-if="row.memo" class="mt-0.5 max-w-xs truncate text-[11px] text-slate-400">{{ row.memo }}</p>
                             </td>
                             <td class="px-5 py-3 text-slate-700">{{ row.brand_name }}</td>
                             <td class="px-5 py-3 text-slate-700">{{ row.category_name }}</td>
