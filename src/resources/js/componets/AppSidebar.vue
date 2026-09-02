@@ -44,7 +44,7 @@ function isActive(name: string): boolean {
 
         <div class="border-t border-slate-200 p-3">
             <div class="flex items-center gap-3 rounded-lg px-3 py-2.5">
-                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500"><AppIcon name="user" :size="16" /></span>
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500"><AppIcon name="person" :size="16" /></span>
                 <span class="min-w-0 flex-1">
                     <span class="block truncate text-xs font-medium text-slate-900">{{ auth.loginId || "guest" }}</span>
                     <span class="block text-[10px] text-slate-400">ログイン中</span>

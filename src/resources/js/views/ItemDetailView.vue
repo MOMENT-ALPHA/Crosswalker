@@ -47,7 +47,7 @@ function confirmDelete() {
     <div v-if="item" class="space-y-5">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-                <BaseButton size="sm" variant="ghost" icon="arrow-left" @click="$router.push({ name: 'items' })">品番一覧へ戻る</BaseButton>
+                <BaseButton size="sm" variant="ghost" icon="arrow_back" @click="$router.push({ name: 'items' })">品番一覧へ戻る</BaseButton>
                 <div class="mt-2 flex flex-wrap items-center gap-2.5">
                     <h2 class="font-mono text-xl font-semibold text-slate-900">{{ item.item_no }}</h2>
                     <BaseBadge tone="brand">{{ catalog.brandName(item.brand_id) }}</BaseBadge>
@@ -57,8 +57,8 @@ function confirmDelete() {
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <BaseButton variant="primary" icon="edit" @click="$router.push({ name: 'item-edit', params: { id: item.id } })">編集</BaseButton>
-                <BaseButton variant="secondary" icon="copy" @click="$router.push({ name: 'item-create', query: { from: String(item.id) } })">複製</BaseButton>
-                <BaseButton variant="danger-ghost" icon="trash" @click="deleteOpen = true">削除</BaseButton>
+                <BaseButton variant="secondary" icon="content_copy" @click="$router.push({ name: 'item-create', query: { from: String(item.id) } })">複製</BaseButton>
+                <BaseButton variant="danger-ghost" icon="delete" @click="deleteOpen = true">削除</BaseButton>
             </div>
         </div>
 
@@ -117,14 +117,14 @@ function confirmDelete() {
             </p>
             <template #footer>
                 <BaseButton variant="secondary" @click="deleteOpen = false">キャンセル</BaseButton>
-                <BaseButton variant="danger" icon="trash" @click="confirmDelete">削除する</BaseButton>
+                <BaseButton variant="danger" icon="delete" @click="confirmDelete">削除する</BaseButton>
             </template>
         </BaseModal>
     </div>
 
     <BaseCard v-else :padded="false">
-        <BaseEmpty icon="alert" title="品番が見つかりません" description="削除されたか、URLが正しくない可能性があります。">
-            <BaseButton variant="secondary" icon="arrow-left" @click="$router.push({ name: 'items' })">品番一覧へ戻る</BaseButton>
+        <BaseEmpty icon="warning" title="品番が見つかりません" description="削除されたか、URLが正しくない可能性があります。">
+            <BaseButton variant="secondary" icon="arrow_back" @click="$router.push({ name: 'items' })">品番一覧へ戻る</BaseButton>
         </BaseEmpty>
     </BaseCard>
 </template>

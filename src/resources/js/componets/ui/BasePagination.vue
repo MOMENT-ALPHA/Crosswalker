@@ -42,7 +42,7 @@ function go(page: number) {
                 aria-label="前のページ"
                 @click="go(page - 1)"
             >
-                <AppIcon name="chevron-left" :size="16" />
+                <AppIcon name="chevron_left" :size="16" />
             </button>
             <template v-for="(entry, index) in pages" :key="`${entry}-${index}`">
                 <span v-if="entry === 'gap'" class="px-1 text-xs text-slate-400">...</span>
@@ -63,7 +63,7 @@ function go(page: number) {
                 aria-label="次のページ"
                 @click="go(page + 1)"
             >
-                <AppIcon name="chevron-right" :size="16" />
+                <AppIcon name="chevron_right" :size="16" />
             </button>
         </nav>
     </div>

@@ -10,7 +10,7 @@ const toneClass = {
     info: "border-slate-200 bg-white text-slate-800",
 } as const;
 
-const iconName = { success: "check", error: "alert", info: "info" } as const;
+const iconName = { success: "check", error: "warning", info: "info" } as const;
 </script>
 
 <template>

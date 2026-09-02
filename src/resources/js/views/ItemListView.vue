@@ -87,7 +87,7 @@ function removeQuickFilter() {
     <div class="space-y-5">
         <BaseCard title="検索条件" description="品番コード・SKUコード・親ASIN・子ASIN・TQ品番を横断して検索します。">
             <template #actions>
-                <BaseButton variant="primary" icon="plus" size="sm" @click="$router.push({ name: 'item-create' })">品番新規登録</BaseButton>
+                <BaseButton variant="primary" icon="add" size="sm" @click="$router.push({ name: 'item-create' })">品番新規登録</BaseButton>
             </template>
 
             <form class="grid gap-4 md:grid-cols-12" @submit.prevent="applySearch()">
@@ -156,9 +156,9 @@ function removeQuickFilter() {
                             <td class="px-5 py-3 text-xs whitespace-nowrap text-slate-500">{{ formatDateTime(row.updated_at) }}</td>
                             <td class="px-5 py-3">
                                 <div class="flex items-center justify-end gap-1">
-                                    <BaseButton size="sm" variant="ghost" icon="detail" @click="$router.push({ name: 'item-detail', params: { id: row.id } })">詳細</BaseButton>
+                                    <BaseButton size="sm" variant="ghost" icon="visibility" @click="$router.push({ name: 'item-detail', params: { id: row.id } })">詳細</BaseButton>
                                     <BaseButton size="sm" variant="ghost" icon="edit" @click="$router.push({ name: 'item-edit', params: { id: row.id } })">編集</BaseButton>
-                                    <BaseButton size="sm" variant="ghost" icon="copy" @click="$router.push({ name: 'item-create', query: { from: String(row.id) } })">複製</BaseButton>
+                                    <BaseButton size="sm" variant="ghost" icon="content_copy" @click="$router.push({ name: 'item-create', query: { from: String(row.id) } })">複製</BaseButton>
                                 </div>
                             </td>
                         </tr>
@@ -173,7 +173,7 @@ function removeQuickFilter() {
                 :description="hasCondition ? '検索条件を変更するか、条件をクリアしてください。' : '品番を新規登録するか、CSVから一括登録してください。'"
             >
                 <BaseButton v-if="hasCondition" variant="secondary" icon="close" @click="clearSearch">検索条件をクリア</BaseButton>
-                <BaseButton v-else variant="primary" icon="plus" @click="$router.push({ name: 'item-create' })">品番新規登録</BaseButton>
+                <BaseButton v-else variant="primary" icon="add" @click="$router.push({ name: 'item-create' })">品番新規登録</BaseButton>
             </BaseEmpty>
 
             <BasePagination v-if="result.rows.length > 0" :page="result.page" :total-pages="result.totalPages" :total="result.total" :per-page="ITEMS_PER_PAGE" @change="applySearch" />

@@ -49,7 +49,7 @@ function onChange(event: Event) {
                 <option value="">{{ placeholder }}</option>
                 <option v-for="option in options" :key="String(option.value)" :value="String(option.value)" class="text-slate-900">{{ option.label }}</option>
             </select>
-            <AppIcon name="chevron-down" :size="16" class="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-slate-400" />
+            <AppIcon name="expand_more" :size="16" class="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-slate-400" />
         </div>
         <p v-if="error" class="mt-1 text-xs text-rose-600">{{ error }}</p>
     </div>

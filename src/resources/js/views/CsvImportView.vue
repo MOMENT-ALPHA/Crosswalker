@@ -147,7 +147,7 @@ function downloadResult() {
                     <span class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm ring-1 ring-slate-200"><AppIcon name="upload" :size="20" /></span>
                     <p class="mt-3 text-sm font-medium text-slate-700">CSVファイルをここにドロップ</p>
                     <p class="mt-1 text-xs text-slate-500">または</p>
-                    <BaseButton class="mt-3" variant="secondary" icon="file" @click="fileInput?.click()">ファイルを選択</BaseButton>
+                    <BaseButton class="mt-3" variant="secondary" icon="description" @click="fileInput?.click()">ファイルを選択</BaseButton>
                     <p class="mt-3 text-[11px] text-slate-400">UTF-8 / ヘッダー行必須 / 最大 {{ CSV_MAX_SIZE_MB }}MB</p>
                     <input ref="fileInput" type="file" accept=".csv,text/csv" class="hidden" @change="onFileChange" />
                 </div>
@@ -224,7 +224,7 @@ function downloadResult() {
         <BaseCard v-if="result" title="取込結果">
             <template #actions>
                 <BaseButton size="sm" variant="secondary" icon="download" @click="downloadResult">処理結果ダウンロード</BaseButton>
-                <BaseButton size="sm" variant="ghost" icon="arrow-right" @click="$router.push({ name: 'items' })">品番一覧で確認</BaseButton>
+                <BaseButton size="sm" variant="ghost" icon="arrow_forward" @click="$router.push({ name: 'items' })">品番一覧で確認</BaseButton>
             </template>
 
             <dl class="grid gap-4 sm:grid-cols-5">

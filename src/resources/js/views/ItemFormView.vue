@@ -183,13 +183,13 @@ function confirmDelete() {
 <template>
     <div v-if="notFound" class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
         <p class="text-sm font-medium text-slate-700">対象の品番が見つかりません。</p>
-        <BaseButton class="mt-4" variant="secondary" icon="arrow-left" @click="$router.push({ name: 'items' })">品番一覧へ戻る</BaseButton>
+        <BaseButton class="mt-4" variant="secondary" icon="arrow_back" @click="$router.push({ name: 'items' })">品番一覧へ戻る</BaseButton>
     </div>
 
     <form v-else class="space-y-5" @submit.prevent="save">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-                <BaseButton size="sm" variant="ghost" icon="arrow-left" @click="cancel">戻る</BaseButton>
+                <BaseButton size="sm" variant="ghost" icon="arrow_back" @click="cancel">戻る</BaseButton>
                 <div class="mt-2 flex items-center gap-2.5">
                     <h2 class="text-xl font-semibold text-slate-900">{{ pageTitle }}</h2>
                     <BaseBadge v-if="mode === 'duplicate'" tone="brand">複製</BaseBadge>
@@ -197,7 +197,7 @@ function confirmDelete() {
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-                <BaseButton v-if="mode === 'edit'" variant="danger-ghost" icon="trash" @click="deleteOpen = true">この品番を削除</BaseButton>
+                <BaseButton v-if="mode === 'edit'" variant="danger-ghost" icon="delete" @click="deleteOpen = true">この品番を削除</BaseButton>
                 <BaseButton variant="secondary" @click="cancel">キャンセル</BaseButton>
                 <BaseButton type="submit" variant="primary" icon="check" :loading="saving">保存</BaseButton>
             </div>
@@ -221,13 +221,13 @@ function confirmDelete() {
                 <div class="md:col-span-4">
                     <div class="flex items-end gap-2">
                         <BaseSelect v-model="form.brand_id" label="ブランド" required :options="brandOptions" :error="errors.item.brand_id" />
-                        <BaseButton class="mb-px shrink-0" variant="secondary" icon="plus" @click="openMasterModal('brand')">追加</BaseButton>
+                        <BaseButton class="mb-px shrink-0" variant="secondary" icon="add" @click="openMasterModal('brand')">追加</BaseButton>
                     </div>
                 </div>
                 <div class="md:col-span-4">
                     <div class="flex items-end gap-2">
                         <BaseSelect v-model="form.category_id" label="カテゴリ" required :options="categoryOptions" :error="errors.item.category_id" />
-                        <BaseButton class="mb-px shrink-0" variant="secondary" icon="plus" @click="openMasterModal('category')">追加</BaseButton>
+                        <BaseButton class="mb-px shrink-0" variant="secondary" icon="add" @click="openMasterModal('category')">追加</BaseButton>
                     </div>
                 </div>
                 <div class="md:col-span-4">
@@ -241,7 +241,7 @@ function confirmDelete() {
 
         <BaseCard :title="`SKU（${form.skus.length}行）`" description="1つの品番に複数のSKUを登録できます。SKUとTQキーは1対1です。" :padded="false">
             <template #actions>
-                <BaseButton size="sm" variant="secondary" icon="plus" @click="addSkuRow">SKU行を追加</BaseButton>
+                <BaseButton size="sm" variant="secondary" icon="add" @click="addSkuRow">SKU行を追加</BaseButton>
             </template>
 
             <div class="overflow-x-auto">
@@ -275,7 +275,7 @@ function confirmDelete() {
                                     aria-label="SKU行を削除"
                                     @click="removeSkuRow(row.key)"
                                 >
-                                    <AppIcon name="trash" :size="15" />
+                                    <AppIcon name="delete" :size="15" />
                                 </button>
                             </td>
                         </tr>
@@ -285,7 +285,7 @@ function confirmDelete() {
 
             <div class="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-3">
                 <p class="text-xs text-slate-500">品番と全SKUを1回の保存処理で登録します。</p>
-                <BaseButton size="sm" variant="secondary" icon="plus" @click="addSkuRow">SKU行を追加</BaseButton>
+                <BaseButton size="sm" variant="secondary" icon="add" @click="addSkuRow">SKU行を追加</BaseButton>
             </div>
         </BaseCard>
 
@@ -304,7 +304,7 @@ function confirmDelete() {
             <BaseInput v-model="masterModal.name" :label="masterModal.kind === 'brand' ? 'ブランド名称' : 'カテゴリ名称'" required :error="masterModal.error" @keyup.enter="submitMasterModal" />
             <template #footer>
                 <BaseButton variant="secondary" @click="masterModal.open = false">キャンセル</BaseButton>
-                <BaseButton variant="primary" icon="plus" @click="submitMasterModal">追加</BaseButton>
+                <BaseButton variant="primary" icon="add" @click="submitMasterModal">追加</BaseButton>
             </template>
         </BaseModal>
 
@@ -314,7 +314,7 @@ function confirmDelete() {
             </p>
             <template #footer>
                 <BaseButton variant="secondary" @click="deleteOpen = false">キャンセル</BaseButton>
-                <BaseButton variant="danger" icon="trash" @click="confirmDelete">削除する</BaseButton>
+                <BaseButton variant="danger" icon="delete" @click="confirmDelete">削除する</BaseButton>
             </template>
         </BaseModal>
 

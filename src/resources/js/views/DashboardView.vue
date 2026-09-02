@@ -12,10 +12,10 @@ const catalog = useCatalogStore();
 
 /** 件数カード。クリックで該当条件を設定した品番一覧へ遷移する。 */
 const cards = computed(() => [
-    { key: "items", label: "登録品番数", value: catalog.stats.itemCount, unit: "件", icon: "items", tone: "primary", to: { name: "items" } },
-    { key: "skus", label: "登録SKU数", value: catalog.stats.skuCount, unit: "件", icon: "box", tone: "sky", to: { name: "items" } },
-    { key: "parent", label: "親ASIN未入力の品番", value: catalog.stats.noParentAsinCount, unit: "件", icon: "alert", tone: "amber", to: { name: "items", query: { filter: "no_parent_asin" } } },
-    { key: "child", label: "子ASIN未入力のSKU", value: catalog.stats.noChildAsinCount, unit: "件", icon: "alert", tone: "rose", to: { name: "items", query: { filter: "no_child_asin" } } },
+    { key: "items", label: "登録品番数", value: catalog.stats.itemCount, unit: "件", icon: "inventory_2", tone: "primary", to: { name: "items" } },
+    { key: "skus", label: "登録SKU数", value: catalog.stats.skuCount, unit: "件", icon: "inventory_2", tone: "sky", to: { name: "items" } },
+    { key: "parent", label: "親ASIN未入力の品番", value: catalog.stats.noParentAsinCount, unit: "件", icon: "warning", tone: "amber", to: { name: "items", query: { filter: "no_parent_asin" } } },
+    { key: "child", label: "子ASIN未入力のSKU", value: catalog.stats.noChildAsinCount, unit: "件", icon: "warning", tone: "rose", to: { name: "items", query: { filter: "no_child_asin" } } },
 ]);
 
 const toneClass: Record<string, string> = {
@@ -35,7 +35,7 @@ const toneClass: Record<string, string> = {
             </div>
             <div class="flex gap-2">
                 <BaseButton variant="secondary" icon="csv" @click="$router.push({ name: 'csv-import' })">CSV取込</BaseButton>
-                <BaseButton variant="primary" icon="plus" @click="$router.push({ name: 'item-create' })">品番を新規登録</BaseButton>
+                <BaseButton variant="primary" icon="add" @click="$router.push({ name: 'item-create' })">品番を新規登録</BaseButton>
             </div>
         </div>
 
@@ -48,7 +48,7 @@ const toneClass: Record<string, string> = {
             >
                 <div class="flex items-start justify-between">
                     <span class="flex h-9 w-9 items-center justify-center rounded-lg" :class="toneClass[card.tone]"><AppIcon :name="card.icon" :size="18" /></span>
-                    <AppIcon name="arrow-right" :size="16" class="text-slate-300 transition-colors group-hover:text-primary-500" />
+                    <AppIcon name="arrow_forward" :size="16" class="text-slate-300 transition-colors group-hover:text-primary-500" />
                 </div>
                 <p class="mt-4 text-xs font-medium text-slate-500">{{ card.label }}</p>
                 <p class="mt-1 flex items-baseline gap-1">
@@ -60,7 +60,7 @@ const toneClass: Record<string, string> = {
 
         <BaseCard title="最近更新された品番" description="更新日時の新しい順に表示しています。" :padded="false">
             <template #actions>
-                <BaseButton size="sm" variant="ghost" icon="arrow-right" @click="$router.push({ name: 'items' })">品番一覧へ</BaseButton>
+                <BaseButton size="sm" variant="ghost" icon="arrow_forward" @click="$router.push({ name: 'items' })">品番一覧へ</BaseButton>
             </template>
 
             <div class="overflow-x-auto">

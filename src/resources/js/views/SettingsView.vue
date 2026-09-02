@@ -18,7 +18,7 @@ const ui = useUiStore();
 type TabKey = "brand" | "category" | "api";
 
 const tabs: { key: TabKey; label: string; icon: string }[] = [
-    { key: "brand", label: "ブランド設定", icon: "tag" },
+    { key: "brand", label: "ブランド設定", icon: "sell" },
     { key: "category", label: "カテゴリ設定", icon: "folder" },
     { key: "api", label: "API接続設定", icon: "key" },
 ];
@@ -151,7 +151,7 @@ async function copyKey() {
             <BaseCard title="ブランドを登録" description="品番の選択欄に表示されます。">
                 <form class="space-y-3" @submit.prevent="addBrand">
                     <BaseInput v-model="brandForm.name" label="ブランド名称" placeholder="栞" required :error="brandForm.error" />
-                    <BaseButton type="submit" variant="primary" icon="plus" block>登録</BaseButton>
+                    <BaseButton type="submit" variant="primary" icon="add" block>登録</BaseButton>
                 </form>
             </BaseCard>
 
@@ -159,7 +159,7 @@ async function copyKey() {
                 <ul class="divide-y divide-slate-100">
                     <li v-for="brand in catalog.brands" :key="brand.id" class="flex items-center justify-between gap-3 px-5 py-3">
                         <div class="flex min-w-0 items-center gap-3">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><AppIcon name="tag" :size="15" /></span>
+                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><AppIcon name="sell" :size="15" /></span>
                             <span class="min-w-0">
                                 <span class="block truncate text-sm font-medium text-slate-900">{{ brand.name }}</span>
                                 <span class="block text-[11px] text-slate-500">使用中の品番 {{ catalog.brandUsageCount(brand.id) }}件</span>
@@ -167,7 +167,7 @@ async function copyKey() {
                         </div>
                         <div class="flex items-center gap-1">
                             <BaseButton size="sm" variant="ghost" icon="edit" @click="openEdit('brand', brand.id, brand.name)">編集</BaseButton>
-                            <BaseButton size="sm" variant="ghost" icon="trash" @click="openDelete('brand', brand.id, brand.name)">削除</BaseButton>
+                            <BaseButton size="sm" variant="ghost" icon="delete" @click="openDelete('brand', brand.id, brand.name)">削除</BaseButton>
                         </div>
                     </li>
                 </ul>
@@ -179,7 +179,7 @@ async function copyKey() {
             <BaseCard title="カテゴリを登録" description="品番の選択欄に表示されます。">
                 <form class="space-y-3" @submit.prevent="addCategory">
                     <BaseInput v-model="categoryForm.name" label="カテゴリ名称" placeholder="老眼鏡" required :error="categoryForm.error" />
-                    <BaseButton type="submit" variant="primary" icon="plus" block>登録</BaseButton>
+                    <BaseButton type="submit" variant="primary" icon="add" block>登録</BaseButton>
                 </form>
             </BaseCard>
 
@@ -195,7 +195,7 @@ async function copyKey() {
                         </div>
                         <div class="flex items-center gap-1">
                             <BaseButton size="sm" variant="ghost" icon="edit" @click="openEdit('category', category.id, category.name)">編集</BaseButton>
-                            <BaseButton size="sm" variant="ghost" icon="trash" @click="openDelete('category', category.id, category.name)">削除</BaseButton>
+                            <BaseButton size="sm" variant="ghost" icon="delete" @click="openDelete('category', category.id, category.name)">削除</BaseButton>
                         </div>
                     </li>
                 </ul>
@@ -229,7 +229,7 @@ async function copyKey() {
                         <p class="text-xs font-semibold text-emerald-800">発行されたAPIキー（この画面を離れると再表示できません）</p>
                         <p class="mt-2 rounded border border-emerald-200 bg-white px-3 py-2 font-mono text-[13px] break-all text-slate-800">{{ catalog.issuedApiKey }}</p>
                         <div class="mt-2 flex gap-2">
-                            <BaseButton size="sm" variant="secondary" icon="copy" @click="copyKey">コピー</BaseButton>
+                            <BaseButton size="sm" variant="secondary" icon="content_copy" @click="copyKey">コピー</BaseButton>
                             <BaseButton size="sm" variant="ghost" icon="close" @click="catalog.clearIssuedApiKey()">閉じる</BaseButton>
                         </div>
                     </div>
@@ -241,7 +241,7 @@ async function copyKey() {
                     <form class="grid gap-3 md:grid-cols-12" @submit.prevent="addSource">
                         <div class="md:col-span-5"><BaseInput v-model="sourceForm.value" label="IPアドレス / CIDR" placeholder="203.0.113.24 または 198.51.100.0/24" :error="sourceForm.error" /></div>
                         <div class="md:col-span-5"><BaseInput v-model="sourceForm.memo" label="メモ" placeholder="本社固定IP" /></div>
-                        <div class="flex items-end md:col-span-2"><BaseButton type="submit" variant="secondary" icon="plus" block>追加</BaseButton></div>
+                        <div class="flex items-end md:col-span-2"><BaseButton type="submit" variant="secondary" icon="add" block>追加</BaseButton></div>
                     </form>
                 </div>
 
@@ -254,7 +254,7 @@ async function copyKey() {
                                 <span v-if="source.memo" class="block truncate text-[11px] text-slate-500">{{ source.memo }}</span>
                             </span>
                         </div>
-                        <BaseButton size="sm" variant="ghost" icon="trash" @click="catalog.removeAllowedSource(source.id)">削除</BaseButton>
+                        <BaseButton size="sm" variant="ghost" icon="delete" @click="catalog.removeAllowedSource(source.id)">削除</BaseButton>
                     </li>
                 </ul>
                 <p v-else class="px-5 py-6 text-center text-sm text-slate-500">許可IPアドレス / CIDRが登録されていません。</p>
@@ -284,7 +284,7 @@ async function copyKey() {
             </p>
             <template #footer>
                 <BaseButton variant="secondary" @click="deleteModal.open = false">{{ deleteModal.blockedMessage ? "閉じる" : "キャンセル" }}</BaseButton>
-                <BaseButton v-if="!deleteModal.blockedMessage" variant="danger" icon="trash" @click="submitDelete">削除する</BaseButton>
+                <BaseButton v-if="!deleteModal.blockedMessage" variant="danger" icon="delete" @click="submitDelete">削除する</BaseButton>
             </template>
         </BaseModal>
 
