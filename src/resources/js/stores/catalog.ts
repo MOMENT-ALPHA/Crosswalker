@@ -79,7 +79,7 @@ export const useCatalogStore = defineStore("catalog", {
                     if (params.filter === "no_child_asin" && !row.skus.some((sku) => trimValue(sku.child_asin) === "")) return false;
                     if (keyword === "") return true;
 
-                    const haystack = [row.item_no, row.parent_asin, ...row.skus.flatMap((sku) => [sku.sku_code, sku.child_asin, sku.tq_item_no])];
+                    const haystack = [row.item_no, row.parent_asin, ...row.skus.flatMap((sku) => [sku.sku_code, sku.child_asin, sku.tq_item_no, sku.tq_color_no, sku.tq_size])];
                     return haystack.some((value) => value.toLowerCase().includes(keyword));
                 })
                 .sort((a, b) => b.updated_at.localeCompare(a.updated_at));

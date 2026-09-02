@@ -10,6 +10,7 @@ import BaseInput from "@/componets/ui/BaseInput.vue";
 import BasePagination from "@/componets/ui/BasePagination.vue";
 import BaseSelect from "@/componets/ui/BaseSelect.vue";
 import { useCatalogStore } from "@/stores/catalog";
+import { searchCatalog } from "@/utils/catalogSearch";
 import { ITEMS_PER_PAGE } from "@/utils/consts";
 import { formatDateTime, toSelectOptions } from "@/utils/helper";
 import type { ItemQuickFilter } from "@/types";
@@ -18,7 +19,7 @@ const route = useRoute();
 const router = useRouter();
 const catalog = useCatalogStore();
 
-/** 検索フォームの入力値（検索ボタンでURLクエリへ反映する） */
+/** 検索フォームの入力値（変更時にURLクエリへ自動反映する） */
 const form = reactive({
     keyword: "",
     brand_id: null as number | null,
@@ -40,6 +41,7 @@ const applied = computed(() => ({
 }));
 
 const result = computed(() => catalog.search(applied.value));
+const skuMatchesByItem = computed(() => new Map(searchCatalog(result.value.rows, applied.value.keyword).map((match) => [match.item.id, match.matchedSkuIds])));
 const brandOptions = computed(() => toSelectOptions(catalog.brands));
 const categoryOptions = computed(() => toSelectOptions(catalog.categories));
 const quickFilterText = computed(() => quickFilterLabels[applied.value.filter] ?? "");
@@ -55,8 +57,10 @@ watch(
     { immediate: true },
 );
 
+watch(form, () => applySearch(), { deep: true });
+
 function applySearch(page = 1) {
-    router.push({
+    router.replace({
         name: "items",
         query: {
             ...(form.keyword.trim() ? { keyword: form.keyword.trim() } : {}),
@@ -85,14 +89,14 @@ function removeQuickFilter() {
 
 <template>
     <div class="space-y-5">
-        <BaseCard title="検索条件" description="品番コード・SKUコード・親ASIN・子ASIN・TQ品番を横断して検索します。">
+        <BaseCard title="検索条件" description="品番コード・ASIN・SKU・TQ品番・カラーNo・サイズを横断して自動検索します。">
             <template #actions>
                 <BaseButton variant="primary" icon="add" size="sm" @click="$router.push({ name: 'item-create' })">品番新規登録</BaseButton>
             </template>
 
-            <form class="grid gap-4 md:grid-cols-12" @submit.prevent="applySearch()">
+            <div class="grid gap-4 md:grid-cols-12">
                 <div class="md:col-span-6">
-                    <BaseInput v-model="form.keyword" label="キーワード" placeholder="fisi-05 / B09T32PVM5 / FISI05" />
+                    <BaseInput v-model="form.keyword" label="キーワード" placeholder="ASIN、TQ品番、SKUなどを入力" hint="入力すると自動的に検索されます。" />
                 </div>
                 <div class="md:col-span-3">
                     <BaseSelect v-model="form.brand_id" label="ブランド" placeholder="すべて" :options="brandOptions" />
@@ -101,10 +105,9 @@ function removeQuickFilter() {
                     <BaseSelect v-model="form.category_id" label="カテゴリ" placeholder="すべて" :options="categoryOptions" />
                 </div>
                 <div class="flex items-center gap-2 md:col-span-12">
-                    <BaseButton type="submit" variant="primary" icon="search">検索</BaseButton>
-                    <BaseButton variant="secondary" icon="close" @click="clearSearch">検索条件をクリア</BaseButton>
+                    <BaseButton v-if="hasCondition" variant="secondary" icon="close" @click="clearSearch">検索条件をクリア</BaseButton>
                 </div>
-            </form>
+            </div>
         </BaseCard>
 
         <div v-if="applied.filter" class="flex flex-wrap items-center gap-2">
@@ -139,28 +142,63 @@ function removeQuickFilter() {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        <tr v-for="row in result.rows" :key="row.id" class="transition-colors hover:bg-slate-50">
-                            <td class="px-5 py-3">
-                                <RouterLink :to="{ name: 'item-detail', params: { id: row.id } }" class="font-mono text-[13px] font-medium text-primary-600 hover:underline">{{
-                                    row.item_no
-                                }}</RouterLink>
-                            </td>
-                            <td class="px-5 py-3 text-slate-700">{{ row.brand_name }}</td>
-                            <td class="px-5 py-3 text-slate-700">{{ row.category_name }}</td>
-                            <td class="px-5 py-3">
-                                <span v-if="row.parent_asin" class="font-mono text-[13px] text-slate-600">{{ row.parent_asin }}</span>
-                                <BaseBadge v-else tone="warning">未入力</BaseBadge>
-                            </td>
-                            <td class="px-5 py-3 text-right tabular-nums text-slate-700">{{ row.sku_count }}</td>
-                            <td class="px-5 py-3 text-xs whitespace-nowrap text-slate-500">{{ formatDateTime(row.updated_at) }}</td>
-                            <td class="px-5 py-3">
-                                <div class="flex items-center justify-end gap-1">
-                                    <BaseButton size="sm" variant="ghost" icon="visibility" @click="$router.push({ name: 'item-detail', params: { id: row.id } })">詳細</BaseButton>
-                                    <BaseButton size="sm" variant="ghost" icon="edit" @click="$router.push({ name: 'item-edit', params: { id: row.id } })">編集</BaseButton>
-                                    <BaseButton size="sm" variant="ghost" icon="content_copy" @click="$router.push({ name: 'item-create', query: { from: String(row.id) } })">複製</BaseButton>
-                                </div>
-                            </td>
-                        </tr>
+                        <template v-for="row in result.rows" :key="row.id">
+                            <tr class="transition-colors hover:bg-slate-50">
+                                <td class="px-5 py-3">
+                                    <RouterLink :to="{ name: 'item-detail', params: { id: row.id } }" class="font-mono text-[13px] font-medium text-primary-600 hover:underline">{{
+                                        row.item_no
+                                    }}</RouterLink>
+                                </td>
+                                <td class="px-5 py-3 text-slate-700">{{ row.brand_name }}</td>
+                                <td class="px-5 py-3 text-slate-700">{{ row.category_name }}</td>
+                                <td class="px-5 py-3">
+                                    <span v-if="row.parent_asin" class="font-mono text-[13px] text-slate-600">{{ row.parent_asin }}</span>
+                                    <BaseBadge v-else tone="warning">未入力</BaseBadge>
+                                </td>
+                                <td class="px-5 py-3 text-right tabular-nums text-slate-700">{{ row.sku_count }}</td>
+                                <td class="px-5 py-3 text-xs whitespace-nowrap text-slate-500">{{ formatDateTime(row.updated_at) }}</td>
+                                <td class="px-5 py-3">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <BaseButton size="sm" variant="ghost" icon="visibility" @click="$router.push({ name: 'item-detail', params: { id: row.id } })">詳細</BaseButton>
+                                        <BaseButton size="sm" variant="ghost" icon="edit" @click="$router.push({ name: 'item-edit', params: { id: row.id } })">編集</BaseButton>
+                                        <BaseButton size="sm" variant="ghost" icon="content_copy" @click="$router.push({ name: 'item-create', query: { from: String(row.id) } })">複製</BaseButton>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="applied.keyword">
+                                <td colspan="7" class="bg-slate-50/60 px-5 pt-0 pb-4">
+                                    <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+                                        <table class="w-full min-w-[720px] text-xs">
+                                            <thead>
+                                                <tr class="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
+                                                    <th class="px-3 py-2 font-medium">SKUコード</th>
+                                                    <th class="px-3 py-2 font-medium">子ASIN</th>
+                                                    <th class="px-3 py-2 font-medium">TQ品番</th>
+                                                    <th class="px-3 py-2 font-medium">カラーNo</th>
+                                                    <th class="px-3 py-2 font-medium">サイズ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100">
+                                                <tr v-for="sku in row.skus" :key="sku.id" :class="skuMatchesByItem.get(row.id)?.has(sku.id) ? 'bg-amber-50' : ''">
+                                                    <td class="px-3 py-2 font-mono font-medium text-slate-800">
+                                                        <span class="inline-flex items-center gap-2">
+                                                            {{ sku.sku_code }}
+                                                            <span v-if="skuMatchesByItem.get(row.id)?.has(sku.id)" class="rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900"
+                                                                >一致</span
+                                                            >
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-3 py-2 font-mono text-slate-600">{{ sku.child_asin || "-" }}</td>
+                                                    <td class="px-3 py-2 font-mono text-slate-600">{{ sku.tq_item_no }}</td>
+                                                    <td class="px-3 py-2 font-mono text-slate-600">{{ sku.tq_color_no }}</td>
+                                                    <td class="px-3 py-2 font-mono text-slate-600">{{ sku.tq_size }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
