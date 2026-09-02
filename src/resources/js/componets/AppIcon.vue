@@ -1,57 +1,55 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-/** 24x24 のストロークアイコン。name でパスを切り替える。 */
 const props = withDefaults(defineProps<{ name: string; size?: number | string; filled?: boolean }>(), { size: 20, filled: false });
 
-const paths: Record<string, string[]> = {
-    dashboard: [
-        "M4 5.5A1.5 1.5 0 0 1 5.5 4h4A1.5 1.5 0 0 1 11 5.5v3A1.5 1.5 0 0 1 9.5 10h-4A1.5 1.5 0 0 1 4 8.5z",
-        "M13 5.5A1.5 1.5 0 0 1 14.5 4h4A1.5 1.5 0 0 1 20 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-4a1.5 1.5 0 0 1-1.5-1.5z",
-        "M4 15.5A1.5 1.5 0 0 1 5.5 14h4A1.5 1.5 0 0 1 11 15.5v3A1.5 1.5 0 0 1 9.5 20h-4A1.5 1.5 0 0 1 4 18.5z",
-        "M13 18.5a1.5 1.5 0 0 1 1.5-1.5h4a1.5 1.5 0 0 1 1.5 1.5A1.5 1.5 0 0 1 18.5 20h-4a1.5 1.5 0 0 1-1.5-1.5z",
-    ],
-    items: ["M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z", "M3.5 7.5 12 12l8.5-4.5", "M12 12v9"],
-    csv: ["M6 3h8l4 4v14H6z", "M14 3v4h4", "M9 13h6", "M9 17h4"],
-    settings: [
-        "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
-        "M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z",
-    ],
-    search: ["M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z", "m20 20-3.9-3.9"],
-    plus: ["M12 5v14", "M5 12h14"],
-    minus: ["M5 12h14"],
-    edit: ["M12 20h9", "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"],
-    copy: ["M9 9h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V10a1 1 0 0 1 1-1z", "M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"],
-    trash: ["M3 6h18", "M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2", "M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6", "M10 11v6", "M14 11v6"],
-    detail: ["M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"],
-    "chevron-left": ["m15 6-6 6 6 6"],
-    "chevron-right": ["m9 6 6 6-6 6"],
-    "chevron-down": ["m6 9 6 6 6-6"],
-    "arrow-left": ["M19 12H5", "m12 19-7-7 7-7"],
-    "arrow-right": ["M5 12h14", "m12 5 7 7-7 7"],
-    check: ["m4 12.5 5 5L20 6.5"],
-    close: ["M6 6l12 12", "M18 6 6 18"],
-    alert: ["M12 9v4", "M12 17h.01", "M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"],
-    info: ["M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 11v5", "M12 8h.01"],
-    logout: ["M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4", "m16 17 5-5-5-5", "M21 12H9"],
-    menu: ["M4 7h16", "M4 12h16", "M4 17h16"],
-    download: ["M12 3v12", "m7 11 5 5 5-5", "M4 21h16"],
-    upload: ["M12 17V5", "m7 9 5-5 5 5", "M4 21h16"],
-    key: ["M15 7a4 4 0 1 1-3.6 5.7L8 16.1V19H5v-3l6.3-6.3A4 4 0 0 1 15 7z", "M16.5 8.5h.01"],
-    refresh: ["M20 11A8 8 0 0 0 6.3 6.3L4 8.5", "M4 5v3.5H7.5", "M4 13a8 8 0 0 0 13.7 4.7L20 15.5", "M20 19v-3.5h-3.5"],
-    box: ["M4 8.5 12 4l8 4.5v7L12 20l-8-4.5z", "M4 8.5 12 13l8-4.5"],
-    tag: ["M11.5 3H20a1 1 0 0 1 1 1v8.5a1 1 0 0 1-.3.7l-8 8a1 1 0 0 1-1.4 0l-8.5-8.5a1 1 0 0 1 0-1.4l8-8a1 1 0 0 1 .7-.3z", "M16.5 8h.01"],
-    folder: ["M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"],
-    user: ["M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", "M4.5 20.5a7.5 7.5 0 0 1 15 0"],
-    link: ["M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.2 1.2", "M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.2-1.2"],
-    file: ["M13 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z", "M13 3v5h5"],
+const iconNames: Record<string, string> = {
+    dashboard: "dashboard",
+    items: "inventory_2",
+    csv: "csv",
+    settings: "settings",
+    search: "search",
+    plus: "add",
+    minus: "remove",
+    edit: "edit",
+    copy: "content_copy",
+    trash: "delete",
+    detail: "visibility",
+    "chevron-left": "chevron_left",
+    "chevron-right": "chevron_right",
+    "chevron-down": "expand_more",
+    "arrow-left": "arrow_back",
+    "arrow-right": "arrow_forward",
+    check: "check",
+    close: "close",
+    alert: "warning",
+    info: "info",
+    logout: "logout",
+    menu: "menu",
+    download: "download",
+    upload: "upload",
+    key: "key",
+    refresh: "refresh",
+    box: "inventory_2",
+    tag: "sell",
+    folder: "folder",
+    user: "person",
+    link: "link",
+    file: "description",
 };
 
-const shapes = computed(() => paths[props.name] ?? paths.info);
+const iconName = computed(() => iconNames[props.name] ?? "info");
+const iconSize = computed(() => (typeof props.size === "number" ? `${props.size}px` : props.size));
 </script>
 
 <template>
-    <svg :width="size" :height="size" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="shrink-0">
-        <path v-for="(shape, index) in shapes" :key="index" :d="shape" />
-    </svg>
+    <span
+        class="material-symbols-outlined shrink-0"
+        :style="{
+            fontSize: iconSize,
+            fontVariationSettings: `'FILL' ${filled ? 1 : 0}, 'wght' 400, 'GRAD' 0, 'opsz' 24`,
+        }"
+        aria-hidden="true"
+        >{{ iconName }}</span
+    >
 </template>

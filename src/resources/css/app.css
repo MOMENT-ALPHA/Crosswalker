@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0");
 @import "tailwindcss";
 
 @source "../views";
@@ -34,5 +35,24 @@
     /* 数値列を揃えるための等幅数字 */
     .tabular-nums {
         font-variant-numeric: tabular-nums;
+    }
+}
+
+@layer components {
+    .material-symbols-outlined {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        overflow: hidden;
+        font-family: "Material Symbols Outlined";
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        font-feature-settings: "liga";
+        -webkit-font-feature-settings: "liga";
+        -webkit-font-smoothing: antialiased;
     }
 }

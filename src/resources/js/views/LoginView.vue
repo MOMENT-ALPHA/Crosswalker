@@ -54,7 +54,7 @@ async function submit() {
             </div>
 
             <div class="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <BaseAlert v-if="errorMessage" tone="danger" class="mt-5">{{ errorMessage }}</BaseAlert>
+                <BaseAlert v-if="errorMessage" tone="danger" class="mb-5">{{ errorMessage }}</BaseAlert>
 
                 <form class="space-y-4" @submit.prevent="submit">
                     <BaseInput v-model="loginId" label="ログインID" placeholder="admin" required autocomplete="username" :error="fieldErrors.loginId" />

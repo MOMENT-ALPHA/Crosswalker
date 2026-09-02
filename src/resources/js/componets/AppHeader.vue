@@ -30,7 +30,6 @@ function logout() {
         <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
                 <h1 class="truncate text-base font-semibold text-slate-900">{{ title }}</h1>
-                <span v-if="screenId" class="hidden rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium tracking-wider text-slate-500 sm:inline">{{ screenId }}</span>
             </div>
         </div>
 
