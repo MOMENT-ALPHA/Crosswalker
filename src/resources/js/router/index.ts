@@ -73,7 +73,7 @@ router.beforeEach((to) => {
 });
 
 router.afterEach((to) => {
-    document.title = `${String(to.meta.title ?? "")} | CROSSWALK`;
+    document.title = `${String(to.meta.title ?? "")} | Crosswalker`;
 });
 
 export default router;
