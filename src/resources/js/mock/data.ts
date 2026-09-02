@@ -268,7 +268,8 @@ export const seedApiSettings: ApiSettings = {
     key_issued_at: "2026-06-14T05:00:00Z",
     key_masked: "cwk_live_••••••••••••••••••••3f2a",
     allowed_sources: [
-        { id: 1, value: "203.0.113.24", kind: "ip", memo: "本社固定IP" },
-        { id: 2, value: "198.51.100.0/24", kind: "cidr", memo: "倉庫システム" },
+        { id: 1, value: "162.43.105.4", kind: "ip", memo: "XServer IP" },
+        { id: 2, value: "203.0.113.24", kind: "ip", memo: "本社固定IP" },
+        { id: 3, value: "198.51.100.0/24", kind: "cidr", memo: "倉庫システム" },
     ],
 };

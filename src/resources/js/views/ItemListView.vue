@@ -129,7 +129,7 @@ function removeQuickFilter() {
             </div>
 
             <div v-if="result.rows.length > 0" class="overflow-x-auto">
-                <table class="w-full min-w-[900px] text-sm">
+                <table class="w-full min-w-225 text-sm">
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs text-slate-500">
                             <th class="px-5 py-2.5 font-medium">品番コード</th>
@@ -168,7 +168,7 @@ function removeQuickFilter() {
                             <tr v-if="applied.keyword">
                                 <td colspan="7" class="bg-slate-50/60 px-5 pt-0 pb-4">
                                     <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-                                        <table class="w-full min-w-[720px] text-xs">
+                                        <table class="w-full min-w-180 text-xs">
                                             <thead>
                                                 <tr class="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
                                                     <th class="px-3 py-2 font-medium">SKUコード</th>

@@ -73,7 +73,7 @@ function confirmDelete() {
 
         <BaseCard title="SKU一覧" :description="`この品番に属するSKU ${item.skus.length}件`" :padded="false">
             <div v-if="item.skus.length > 0" class="overflow-x-auto">
-                <table class="w-full min-w-[900px] text-sm">
+                <table class="w-full min-w-225 text-sm">
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs text-slate-500">
                             <th class="w-12 px-5 py-2.5 font-medium">#</th>

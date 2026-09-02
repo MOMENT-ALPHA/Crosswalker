@@ -239,7 +239,7 @@ async function copyKey() {
             <BaseCard title="許可IPアドレス / CIDR" description="接続元IPが許可設定に一致し、APIキーが正しい場合にAPIへの接続を許可します。" :padded="false">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <form class="grid gap-3 md:grid-cols-12" @submit.prevent="addSource">
-                        <div class="md:col-span-5"><BaseInput v-model="sourceForm.value" label="IPアドレス / CIDR" placeholder="203.0.113.24 または 198.51.100.0/24" :error="sourceForm.error" /></div>
+                        <div class="md:col-span-5"><BaseInput v-model="sourceForm.value" label="IP" placeholder="000.0.000.00" :error="sourceForm.error" /></div>
                         <div class="md:col-span-5"><BaseInput v-model="sourceForm.memo" label="メモ" placeholder="本社固定IP" /></div>
                         <div class="flex items-end md:col-span-2"><BaseButton type="submit" variant="secondary" icon="add" block>追加</BaseButton></div>
                     </form>
