@@ -23,6 +23,7 @@ export interface Sku {
     tq_color_no: string;
     tq_size: string;
     memo: string;
+    is_active: boolean;
     sort_order: number;
     created_at: string;
     updated_at: string;
@@ -35,6 +36,7 @@ export interface Item {
     category_id: number | null;
     parent_asin: string;
     memo: string;
+    is_active: boolean;
     created_at: string;
     updated_at: string;
     skus: Sku[];
@@ -58,6 +60,7 @@ export interface SkuFormRow {
     tq_color_no: string;
     tq_size: string;
     memo: string;
+    is_active: boolean;
 }
 
 /** 登録・編集画面の品番入力値 */
@@ -67,6 +70,7 @@ export interface ItemFormValues {
     category_id: number | null;
     parent_asin: string;
     memo: string;
+    is_active: boolean;
     skus: SkuFormRow[];
 }
 
@@ -87,12 +91,14 @@ export interface ItemSearchParams {
     keyword: string;
     brand_id: number | null;
     category_id: number | null;
+    status: ItemStatusFilter;
     /** ダッシュボードからの遷移で使う絞り込み */
     filter: ItemQuickFilter;
     page: number;
 }
 
 export type ItemQuickFilter = "" | "no_parent_asin" | "no_child_asin";
+export type ItemStatusFilter = "active" | "inactive" | "all";
 
 /** CSV取込 */
 export interface CsvRowError {

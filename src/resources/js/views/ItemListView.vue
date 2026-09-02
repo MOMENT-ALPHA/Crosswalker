@@ -10,20 +10,23 @@ import BaseInput from "@/componets/ui/BaseInput.vue";
 import BasePagination from "@/componets/ui/BasePagination.vue";
 import BaseSelect from "@/componets/ui/BaseSelect.vue";
 import { useCatalogStore } from "@/stores/catalog";
+import { useUiStore } from "@/stores/ui";
 import { searchCatalog } from "@/utils/catalogSearch";
 import { ITEMS_PER_PAGE } from "@/utils/consts";
 import { formatDateTime, toSelectOptions } from "@/utils/helper";
-import type { ItemQuickFilter } from "@/types";
+import type { ItemQuickFilter, ItemListRow, ItemStatusFilter } from "@/types";
 
 const route = useRoute();
 const router = useRouter();
 const catalog = useCatalogStore();
+const ui = useUiStore();
 
 /** 検索フォームの入力値（変更時にURLクエリへ自動反映する） */
 const form = reactive({
     keyword: "",
     brand_id: null as number | null,
     category_id: null as number | null,
+    status: "active" as ItemStatusFilter,
 });
 
 const quickFilterLabels: Record<string, string> = {
@@ -36,6 +39,7 @@ const applied = computed(() => ({
     keyword: String(route.query.keyword ?? ""),
     brand_id: route.query.brand_id ? Number(route.query.brand_id) : null,
     category_id: route.query.category_id ? Number(route.query.category_id) : null,
+    status: (["inactive", "all"] as string[]).includes(String(route.query.status)) ? (String(route.query.status) as ItemStatusFilter) : "active",
     filter: String(route.query.filter ?? "") as ItemQuickFilter,
     page: Number(route.query.page ?? 1) || 1,
 }));
@@ -44,8 +48,15 @@ const result = computed(() => catalog.search(applied.value));
 const skuMatchesByItem = computed(() => new Map(searchCatalog(result.value.rows, applied.value.keyword).map((match) => [match.item.id, match.matchedSkuIds])));
 const brandOptions = computed(() => toSelectOptions(catalog.brands));
 const categoryOptions = computed(() => toSelectOptions(catalog.categories));
+const statusOptions = [
+    { value: "active", label: "有効のみ" },
+    { value: "inactive", label: "無効のみ" },
+    { value: "all", label: "すべて" },
+];
 const quickFilterText = computed(() => quickFilterLabels[applied.value.filter] ?? "");
-const hasCondition = computed(() => applied.value.keyword !== "" || applied.value.brand_id !== null || applied.value.category_id !== null || applied.value.filter !== "");
+const hasCondition = computed(
+    () => applied.value.keyword !== "" || applied.value.brand_id !== null || applied.value.category_id !== null || applied.value.status !== "active" || applied.value.filter !== "",
+);
 
 watch(
     applied,
@@ -53,6 +64,7 @@ watch(
         form.keyword = value.keyword;
         form.brand_id = value.brand_id;
         form.category_id = value.category_id;
+        form.status = value.status;
     },
     { immediate: true },
 );
@@ -66,6 +78,7 @@ function applySearch(page = 1) {
             ...(form.keyword.trim() ? { keyword: form.keyword.trim() } : {}),
             ...(form.brand_id ? { brand_id: String(form.brand_id) } : {}),
             ...(form.category_id ? { category_id: String(form.category_id) } : {}),
+            ...(form.status !== "active" ? { status: form.status } : {}),
             ...(applied.value.filter ? { filter: applied.value.filter } : {}),
             ...(page > 1 ? { page: String(page) } : {}),
         },
@@ -76,7 +89,13 @@ function clearSearch() {
     form.keyword = "";
     form.brand_id = null;
     form.category_id = null;
+    form.status = "active";
     router.push({ name: "items" });
+}
+
+function toggleItemStatus(row: ItemListRow) {
+    const updated = catalog.setItemActive(row.id, !row.is_active);
+    if (updated) ui.notify("品番「" + updated.item_no + "」を" + (updated.is_active ? "有効" : "無効") + "にしました。");
 }
 
 function removeQuickFilter() {
@@ -95,7 +114,7 @@ function removeQuickFilter() {
             </template>
 
             <div class="grid gap-4 md:grid-cols-12">
-                <div class="md:col-span-6">
+                <div class="md:col-span-3">
                     <BaseInput v-model="form.keyword" label="キーワード" placeholder="ASIN、TQ品番、SKUなどを入力" hint="入力すると自動的に検索されます。" />
                 </div>
                 <div class="md:col-span-3">
@@ -103,6 +122,9 @@ function removeQuickFilter() {
                 </div>
                 <div class="md:col-span-3">
                     <BaseSelect v-model="form.category_id" label="カテゴリ" placeholder="すべて" :options="categoryOptions" />
+                </div>
+                <div class="md:col-span-3">
+                    <BaseSelect v-model="form.status" label="状態" :options="statusOptions" />
                 </div>
                 <div class="flex items-center gap-2 md:col-span-12">
                     <BaseButton v-if="hasCondition" variant="secondary" icon="close" @click="clearSearch">検索条件をクリア</BaseButton>
@@ -133,6 +155,7 @@ function removeQuickFilter() {
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs text-slate-500">
                             <th class="px-5 py-2.5 font-medium">品番コード</th>
+                            <th class="px-5 py-2.5 font-medium">状態</th>
                             <th class="px-5 py-2.5 font-medium">ブランド</th>
                             <th class="px-5 py-2.5 font-medium">カテゴリ</th>
                             <th class="px-5 py-2.5 font-medium">親ASIN</th>
@@ -149,6 +172,9 @@ function removeQuickFilter() {
                                         row.item_no
                                     }}</RouterLink>
                                 </td>
+                                <td class="px-5 py-3"
+                                    ><BaseBadge :tone="row.is_active ? 'success' : 'neutral'">{{ row.is_active ? "有効" : "無効" }}</BaseBadge></td
+                                >
                                 <td class="px-5 py-3 text-slate-700">{{ row.brand_name }}</td>
                                 <td class="px-5 py-3 text-slate-700">{{ row.category_name }}</td>
                                 <td class="px-5 py-3">
@@ -161,16 +187,20 @@ function removeQuickFilter() {
                                     <div class="flex items-center justify-end gap-1">
                                         <BaseButton size="sm" variant="ghost" icon="visibility" @click="$router.push({ name: 'item-detail', params: { id: row.id } })">詳細</BaseButton>
                                         <BaseButton size="sm" variant="ghost" icon="edit" @click="$router.push({ name: 'item-edit', params: { id: row.id } })">編集</BaseButton>
+                                        <BaseButton size="sm" variant="ghost" :icon="row.is_active ? 'block' : 'check_circle'" @click="toggleItemStatus(row)">{{
+                                            row.is_active ? "無効化" : "有効化"
+                                        }}</BaseButton>
                                     </div>
                                 </td>
                             </tr>
                             <tr v-if="applied.keyword">
-                                <td colspan="7" class="bg-slate-50/60 px-5 pt-0 pb-4">
+                                <td colspan="8" class="bg-slate-50/60 px-5 p-4">
                                     <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
                                         <table class="w-full min-w-180 text-xs">
                                             <thead>
                                                 <tr class="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
                                                     <th class="px-3 py-2 font-medium">SKUコード</th>
+                                                    <th class="px-3 py-2 font-medium">状態</th>
                                                     <th class="px-3 py-2 font-medium">子ASIN</th>
                                                     <th class="px-3 py-2 font-medium">TQ品番</th>
                                                     <th class="px-3 py-2 font-medium">カラーNo</th>
@@ -187,6 +217,11 @@ function removeQuickFilter() {
                                                             >
                                                         </span>
                                                     </td>
+                                                    <td class="px-3 py-2"
+                                                        ><BaseBadge :tone="row.is_active && sku.is_active ? 'success' : 'neutral'">{{
+                                                            row.is_active && sku.is_active ? "有効" : "無効"
+                                                        }}</BaseBadge></td
+                                                    >
                                                     <td class="px-3 py-2 font-mono text-slate-600">{{ sku.child_asin || "-" }}</td>
                                                     <td class="px-3 py-2 font-mono text-slate-600">{{ sku.tq_item_no }}</td>
                                                     <td class="px-3 py-2 font-mono text-slate-600">{{ sku.tq_color_no }}</td>

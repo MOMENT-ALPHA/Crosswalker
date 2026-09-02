@@ -53,6 +53,7 @@ function confirmDelete() {
                     <BaseBadge tone="brand">{{ catalog.brandName(item.brand_id) }}</BaseBadge>
                     <BaseBadge>{{ catalog.categoryName(item.category_id) }}</BaseBadge>
                     <BaseBadge tone="success">SKU {{ item.skus.length }}件</BaseBadge>
+                    <BaseBadge :tone="item.is_active ? 'success' : 'neutral'">{{ item.is_active ? "有効" : "無効" }}</BaseBadge>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -77,6 +78,7 @@ function confirmDelete() {
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs text-slate-500">
                             <th class="w-12 px-5 py-2.5 font-medium">#</th>
                             <th class="px-5 py-2.5 font-medium">SKUコード</th>
+                            <th class="px-5 py-2.5 font-medium">状態</th>
                             <th class="px-5 py-2.5 font-medium">子ASIN</th>
                             <th class="px-5 py-2.5 font-medium">TQ品番</th>
                             <th class="px-5 py-2.5 font-medium">TQカラーNo</th>
@@ -87,6 +89,9 @@ function confirmDelete() {
                         <tr v-for="(sku, index) in item.skus" :key="sku.id" class="transition-colors hover:bg-slate-50">
                             <td class="px-5 py-3 text-xs text-slate-400">{{ index + 1 }}</td>
                             <td class="px-5 py-3 font-mono text-[13px] font-medium text-slate-900">{{ sku.sku_code }}</td>
+                            <td class="px-5 py-3"
+                                ><BaseBadge :tone="item.is_active && sku.is_active ? 'success' : 'neutral'">{{ item.is_active && sku.is_active ? "有効" : "無効" }}</BaseBadge></td
+                            >
                             <td class="px-5 py-3">
                                 <span v-if="sku.child_asin" class="font-mono text-[13px] text-slate-600">{{ sku.child_asin }}</span>
                                 <BaseBadge v-else tone="warning">未入力</BaseBadge>

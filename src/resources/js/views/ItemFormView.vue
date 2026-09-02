@@ -9,6 +9,7 @@ import BaseCard from "@/componets/ui/BaseCard.vue";
 import BaseInput from "@/componets/ui/BaseInput.vue";
 import BaseModal from "@/componets/ui/BaseModal.vue";
 import BaseSelect from "@/componets/ui/BaseSelect.vue";
+import BaseToggle from "@/componets/ui/BaseToggle.vue";
 import { useCatalogStore } from "@/stores/catalog";
 import { useUiStore } from "@/stores/ui";
 import { createEmptySkuRow, toSelectOptions, uid } from "@/utils/helper";
@@ -23,7 +24,7 @@ const ui = useUiStore();
 const editingId = computed(() => (route.name === "item-edit" ? Number(route.params.id) : null));
 const mode = computed<"create" | "edit">(() => (editingId.value !== null ? "edit" : "create"));
 
-const form = reactive<ItemFormValues>({ item_no: "", brand_id: null, category_id: null, parent_asin: "", memo: "", skus: [createEmptySkuRow()] });
+const form = reactive<ItemFormValues>({ item_no: "", brand_id: null, category_id: null, parent_asin: "", memo: "", is_active: true, skus: [createEmptySkuRow()] });
 const errors = ref<ValidationResult>({ item: {}, skus: {}, global: [] });
 const saving = ref(false);
 const initialSnapshot = ref("");
@@ -51,6 +52,7 @@ onMounted(() => {
             form.category_id = item.category_id;
             form.parent_asin = item.parent_asin;
             form.memo = item.memo;
+            form.is_active = item.is_active;
             form.skus = item.skus.map((sku) => ({
                 key: uid("sku"),
                 id: sku.id,
@@ -60,6 +62,7 @@ onMounted(() => {
                 tq_color_no: sku.tq_color_no,
                 tq_size: sku.tq_size,
                 memo: sku.memo,
+                is_active: sku.is_active,
             }));
         }
     }
@@ -216,6 +219,9 @@ function confirmDelete() {
                 <div class="md:col-span-4">
                     <BaseInput v-model="form.parent_asin" label="親ASIN" placeholder="B09T32PVM5" :error="errors.item.parent_asin" />
                 </div>
+                <div class="md:col-span-12 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <BaseToggle v-model="form.is_active" label="品番を有効にする" description="無効にすると、所属するすべてのSKUも無効として扱われます。" />
+                </div>
             </div>
         </BaseCard>
 
@@ -230,6 +236,7 @@ function confirmDelete() {
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs text-slate-500">
                             <th class="w-10 px-3 py-2.5 font-medium">#</th>
                             <th class="px-3 py-2.5 font-medium">SKUコード<span class="ml-1 text-rose-500">*</span></th>
+                            <th class="w-28 px-3 py-2.5 font-medium">状態</th>
                             <th class="px-3 py-2.5 font-medium">子ASIN</th>
                             <th class="px-3 py-2.5 font-medium">TQ品番<span class="ml-1 text-rose-500">*</span></th>
                             <th class="px-3 py-2.5 font-medium">TQカラーNo<span class="ml-1 text-rose-500">*</span></th>
@@ -241,6 +248,7 @@ function confirmDelete() {
                         <tr v-for="(row, index) in form.skus" :key="row.key" class="align-top" :class="errors.skus[row.key] ? 'bg-rose-50/40' : ''">
                             <td class="px-3 py-2.5 text-xs text-slate-400">{{ index + 1 }}</td>
                             <td class="px-3 py-2.5"><BaseInput v-model="row.sku_code" size="sm" placeholder="fisi-05-1-10" :error="skuError(row.key, 'sku_code')" /></td>
+                            <td class="px-3 py-2.5"><BaseToggle v-model="row.is_active" :label="row.is_active ? '有効' : '無効'" /></td>
                             <td class="px-3 py-2.5"><BaseInput v-model="row.child_asin" size="sm" placeholder="B09EXAMPLE1" :error="skuError(row.key, 'child_asin')" /></td>
                             <td class="px-3 py-2.5"><BaseInput v-model="row.tq_item_no" size="sm" placeholder="FISI05" :error="skuError(row.key, 'tq_item_no')" /></td>
                             <td class="px-3 py-2.5"><BaseInput v-model="row.tq_color_no" size="sm" placeholder="1" :error="skuError(row.key, 'tq_color_no')" /></td>

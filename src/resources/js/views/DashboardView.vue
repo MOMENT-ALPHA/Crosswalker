@@ -12,8 +12,8 @@ const catalog = useCatalogStore();
 
 /** 件数カード。クリックで該当条件を設定した品番一覧へ遷移する。 */
 const cards = computed(() => [
-    { key: "items", label: "登録品番数", value: catalog.stats.itemCount, unit: "件", icon: "inventory_2", tone: "primary", to: { name: "items" } },
-    { key: "skus", label: "登録SKU数", value: catalog.stats.skuCount, unit: "件", icon: "inventory_2", tone: "sky", to: { name: "items" } },
+    { key: "items", label: "有効品番数", value: catalog.stats.itemCount, unit: "件", icon: "inventory_2", tone: "primary", to: { name: "items" } },
+    { key: "skus", label: "有効SKU数", value: catalog.stats.skuCount, unit: "件", icon: "inventory_2", tone: "sky", to: { name: "items" } },
     { key: "parent", label: "親ASIN未入力の品番", value: catalog.stats.noParentAsinCount, unit: "件", icon: "warning", tone: "amber", to: { name: "items", query: { filter: "no_parent_asin" } } },
     { key: "child", label: "子ASIN未入力のSKU", value: catalog.stats.noChildAsinCount, unit: "件", icon: "warning", tone: "rose", to: { name: "items", query: { filter: "no_child_asin" } } },
 ]);

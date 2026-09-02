@@ -44,6 +44,7 @@ export function createEmptySkuRow(): SkuFormRow {
         tq_color_no: "",
         tq_size: "",
         memo: "",
+        is_active: true,
     };
 }
 

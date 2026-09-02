@@ -38,11 +38,12 @@ export const useCatalogStore = defineStore("catalog", {
         allSkus: (state): Sku[] => state.items.flatMap((item) => item.skus),
 
         stats(state): { itemCount: number; skuCount: number; noParentAsinCount: number; noChildAsinCount: number } {
-            const skus = state.items.flatMap((item) => item.skus);
+            const activeItems = state.items.filter((item) => item.is_active);
+            const skus = activeItems.flatMap((item) => item.skus.filter((sku) => sku.is_active));
             return {
-                itemCount: state.items.length,
+                itemCount: activeItems.length,
                 skuCount: skus.length,
-                noParentAsinCount: state.items.filter((item) => trimValue(item.parent_asin) === "").length,
+                noParentAsinCount: activeItems.filter((item) => trimValue(item.parent_asin) === "").length,
                 noChildAsinCount: skus.filter((sku) => trimValue(sku.child_asin) === "").length,
             };
         },
@@ -57,7 +58,10 @@ export const useCatalogStore = defineStore("catalog", {
         },
 
         recentItems(): ItemListRow[] {
-            return [...this.rows].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 8);
+            return this.rows
+                .filter((item) => item.is_active)
+                .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+                .slice(0, 8);
         },
     },
 
@@ -75,6 +79,8 @@ export const useCatalogStore = defineStore("catalog", {
                 .filter((row) => {
                     if (params.brand_id && row.brand_id !== params.brand_id) return false;
                     if (params.category_id && row.category_id !== params.category_id) return false;
+                    if (params.status === "active" && !row.is_active) return false;
+                    if (params.status === "inactive" && row.is_active) return false;
                     if (params.filter === "no_parent_asin" && trimValue(row.parent_asin) !== "") return false;
                     if (params.filter === "no_child_asin" && !row.skus.some((sku) => trimValue(sku.child_asin) === "")) return false;
                     if (keyword === "") return true;
@@ -188,6 +194,7 @@ export const useCatalogStore = defineStore("catalog", {
                     tq_color_no: trimValue(row.tq_color_no),
                     tq_size: trimValue(row.tq_size),
                     memo: trimValue(row.memo),
+                    is_active: row.is_active,
                     sort_order: index + 1,
                     created_at: current?.created_at ?? timestamp,
                     updated_at: timestamp,
@@ -201,6 +208,7 @@ export const useCatalogStore = defineStore("catalog", {
                 category_id: values.category_id,
                 parent_asin: trimValue(values.parent_asin),
                 memo: trimValue(values.memo),
+                is_active: values.is_active,
                 created_at: existing?.created_at ?? timestamp,
                 updated_at: timestamp,
                 skus,
@@ -213,6 +221,26 @@ export const useCatalogStore = defineStore("catalog", {
             }
 
             return saved;
+        },
+
+        /** 品番の有効状態を所属SKUごと切り替える */
+        setItemActive(id: number, isActive: boolean): Item | undefined {
+            const item = this.findItem(id);
+            if (!item) return undefined;
+            item.is_active = isActive;
+            item.updated_at = nowIso();
+            return item;
+        },
+
+        /** SKUの有効状態を切り替える */
+        setSkuActive(itemId: number, skuId: number, isActive: boolean): Sku | undefined {
+            const item = this.findItem(itemId);
+            const sku = item?.skus.find((entry) => entry.id === skuId);
+            if (!item || !sku) return undefined;
+            sku.is_active = isActive;
+            sku.updated_at = nowIso();
+            item.updated_at = sku.updated_at;
+            return sku;
         },
 
         /** 品番削除（所属SKUも同時に削除される） */
@@ -377,13 +405,37 @@ export const useCatalogStore = defineStore("catalog", {
             const seenTqKey = new Map<string, number>();
             const seenChildAsin = new Map<string, number>();
             const itemHeaders = new Map<string, { brand: string; category: string; line: number }>();
+            const itemStatuses = new Map<string, { value: string; line: number }>();
+            const statusErrorsByLine = new Map<number, CsvRowError[]>();
+
+            rows.forEach((row) => {
+                const rowErrors: CsvRowError[] = [];
+                const itemStatus = row.item_status ?? "";
+                const skuStatus = row.sku_status ?? "";
+                if (itemStatus !== "" && itemStatus !== "active" && itemStatus !== "inactive") {
+                    rowErrors.push({ line: row.__line, column: "item_status", message: "品番状態はactiveまたはinactiveで指定してください。" });
+                }
+                if (skuStatus !== "" && skuStatus !== "active" && skuStatus !== "inactive") {
+                    rowErrors.push({ line: row.__line, column: "sku_status", message: "SKU状態はactiveまたはinactiveで指定してください。" });
+                }
+                const itemKey = (row.item_no ?? "").toLowerCase();
+                if (itemKey !== "" && (itemStatus === "active" || itemStatus === "inactive")) {
+                    const known = itemStatuses.get(itemKey);
+                    if (known && known.value !== itemStatus) {
+                        rowErrors.push({ line: row.__line, column: "item_status", message: "同じ品番に異なる品番状態が指定されています（" + known.line + "行目と不一致）。" });
+                    } else if (!known) {
+                        itemStatuses.set(itemKey, { value: itemStatus, line: row.__line });
+                    }
+                }
+                if (rowErrors.length > 0) statusErrorsByLine.set(row.__line, rowErrors);
+            });
             let createCount = 0;
             let updateCount = 0;
             let unchangedCount = 0;
 
             rows.forEach((row) => {
                 const line = row.__line;
-                const rowErrors: CsvRowError[] = [];
+                const rowErrors: CsvRowError[] = [...(statusErrorsByLine.get(line) ?? [])];
 
                 CSV_COLUMNS.filter((column) => column.required).forEach((column) => {
                     if ((row[column.key] ?? "") === "") {
@@ -457,6 +509,8 @@ export const useCatalogStore = defineStore("catalog", {
 
                 const existingSku = this.allSkus.find((sku) => sku.sku_code.toLowerCase() === skuCode.toLowerCase());
                 const owner = existingSku ? this.items.find((item) => item.id === existingSku.item_id) : undefined;
+                const resolvedItemStatus = itemStatuses.get(itemNo.toLowerCase())?.value;
+                const resolvedSkuStatus = row.sku_status ?? "";
                 if (existingSku && owner && itemNo !== "" && owner.item_no.toLowerCase() !== itemNo.toLowerCase()) {
                     rowErrors.push({ line, column: "sku_code", message: `SKU「${skuCode}」は品番「${owner.item_no}」に登録済みです。所属品番は変更できません。` });
                 }
@@ -473,12 +527,14 @@ export const useCatalogStore = defineStore("catalog", {
                         existingSku.tq_item_no !== tqItemNo ||
                         existingSku.tq_color_no !== tqColorNo ||
                         existingSku.tq_size !== tqSize ||
-                        existingSku.memo !== (row.sku_memo ?? "");
+                        existingSku.memo !== (row.sku_memo ?? "") ||
+                        (resolvedSkuStatus !== "" && existingSku.is_active !== (resolvedSkuStatus === "active"));
                     const itemChanged = owner
                         ? owner.parent_asin !== (row.parent_asin ?? "") ||
                           owner.memo !== (row.item_memo ?? "") ||
                           this.brandName(owner.brand_id) !== brandName ||
-                          this.categoryName(owner.category_id) !== categoryName
+                          this.categoryName(owner.category_id) !== categoryName ||
+                          (resolvedItemStatus !== undefined && owner.is_active !== (resolvedItemStatus === "active"))
                         : false;
 
                     if (skuChanged || itemChanged) {
@@ -510,6 +566,11 @@ export const useCatalogStore = defineStore("catalog", {
             const timestamp = nowIso();
             const snapshot = JSON.parse(JSON.stringify(this.items)) as Item[];
             const touchedItemIds = new Set<number>();
+            const itemStatuses = new Map<string, string>();
+            summary.rows.forEach((row) => {
+                const status = row.item_status ?? "";
+                if (status === "active" || status === "inactive") itemStatuses.set((row.item_no ?? "").toLowerCase(), status);
+            });
 
             try {
                 summary.rows.forEach((row) => {
@@ -517,6 +578,7 @@ export const useCatalogStore = defineStore("catalog", {
                     const brand = this.brands.find((entry) => entry.name === (row.brand_name ?? ""));
                     const category = this.categories.find((entry) => entry.name === (row.category_name ?? ""));
                     let item = this.items.find((entry) => entry.item_no.toLowerCase() === itemNo.toLowerCase());
+                    const itemStatus = itemStatuses.get(itemNo.toLowerCase());
 
                     if (!item) {
                         item = {
@@ -526,6 +588,7 @@ export const useCatalogStore = defineStore("catalog", {
                             category_id: category?.id ?? null,
                             parent_asin: row.parent_asin ?? "",
                             memo: row.item_memo ?? "",
+                            is_active: itemStatus !== "inactive",
                             created_at: timestamp,
                             updated_at: timestamp,
                             skus: [],
@@ -537,6 +600,7 @@ export const useCatalogStore = defineStore("catalog", {
                         item.category_id = category?.id ?? item.category_id;
                         item.parent_asin = row.parent_asin ?? "";
                         item.memo = row.item_memo ?? "";
+                        if (itemStatus !== undefined) item.is_active = itemStatus === "active";
                         item.updated_at = timestamp;
                         result.updated_items += 1;
                     }
@@ -550,6 +614,7 @@ export const useCatalogStore = defineStore("catalog", {
                         existing.tq_color_no = row.tq_color_no ?? "";
                         existing.tq_size = row.tq_size ?? "";
                         existing.memo = row.sku_memo ?? "";
+                        if (row.sku_status === "active" || row.sku_status === "inactive") existing.is_active = row.sku_status === "active";
                         existing.updated_at = timestamp;
                         result.updated_skus += 1;
                     } else {
@@ -562,6 +627,7 @@ export const useCatalogStore = defineStore("catalog", {
                             tq_color_no: row.tq_color_no ?? "",
                             tq_size: row.tq_size ?? "",
                             memo: row.sku_memo ?? "",
+                            is_active: row.sku_status !== "inactive",
                             sort_order: item.skus.length + 1,
                             created_at: timestamp,
                             updated_at: timestamp,
