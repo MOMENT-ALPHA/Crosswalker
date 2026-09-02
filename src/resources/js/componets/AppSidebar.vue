@@ -18,11 +18,11 @@ function isActive(name: string): boolean {
 </script>
 
 <template>
-    <aside class="flex h-full w-64 shrink-0 flex-col bg-slate-900 text-slate-300">
-        <div class="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
-            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500 text-white"><AppIcon name="link" :size="18" /></span>
+    <aside class="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-600">
+        <div class="flex h-16 items-center gap-2.5 border-b border-slate-200 px-5">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500 text-white"><AppIcon name="link" :size="18" /></span>
             <span class="min-w-0">
-                <span class="block text-sm font-semibold tracking-[0.18em] text-white">CROSSWALK</span>
+                <span class="block text-sm font-semibold tracking-[0.18em] text-slate-900">CROSSWALK</span>
                 <span class="block truncate text-[10px] text-slate-400">商品識別子管理システム</span>
             </span>
         </div>
@@ -33,21 +33,21 @@ function isActive(name: string): boolean {
                 :key="nav.name"
                 :to="{ name: nav.name }"
                 class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors"
-                :class="isActive(nav.name) ? 'bg-indigo-500/15 text-white ring-1 ring-indigo-400/30' : 'text-slate-400 hover:bg-white/5 hover:text-white'"
+                :class="isActive(nav.name) ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'"
                 @click="ui.closeSidebar()"
             >
-                <AppIcon :name="nav.icon" :size="18" :class="isActive(nav.name) ? 'text-indigo-300' : 'text-slate-500 group-hover:text-slate-300'" />
+                <AppIcon :name="nav.icon" :size="18" :class="isActive(nav.name) ? 'text-primary-500' : 'text-slate-400 group-hover:text-slate-600'" />
                 <span class="flex-1 font-medium">{{ nav.label }}</span>
-                <span class="text-[10px] tracking-wider text-slate-600">{{ nav.screenId }}</span>
+                <span class="text-[10px] tracking-wider text-slate-300">{{ nav.screenId }}</span>
             </RouterLink>
         </nav>
 
-        <div class="border-t border-white/10 p-3">
+        <div class="border-t border-slate-200 p-3">
             <div class="flex items-center gap-3 rounded-lg px-3 py-2.5">
-                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-slate-300"><AppIcon name="user" :size="16" /></span>
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500"><AppIcon name="user" :size="16" /></span>
                 <span class="min-w-0 flex-1">
-                    <span class="block truncate text-xs font-medium text-white">{{ auth.loginId || "guest" }}</span>
-                    <span class="block text-[10px] text-slate-500">ログイン中</span>
+                    <span class="block truncate text-xs font-medium text-slate-900">{{ auth.loginId || "guest" }}</span>
+                    <span class="block text-[10px] text-slate-400">ログイン中</span>
                 </span>
             </div>
         </div>

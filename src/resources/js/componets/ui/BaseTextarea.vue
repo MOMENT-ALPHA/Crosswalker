@@ -14,7 +14,7 @@ const areaId = useId();
 
 const areaClass = computed(() => [
     "w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline focus:outline-2",
-    props.error ? "border-rose-400 focus:outline-rose-500" : "border-slate-300 focus:border-indigo-500 focus:outline-indigo-500/40",
+    props.error ? "border-rose-400 focus:outline-rose-500" : "border-slate-300 focus:border-primary-500 focus:outline-primary-500/40",
 ]);
 </script>
 

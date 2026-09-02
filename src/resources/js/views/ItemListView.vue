@@ -111,7 +111,7 @@ function removeQuickFilter() {
             <span class="text-xs text-slate-500">絞り込み中:</span>
             <button
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-200 ring-inset transition-colors hover:bg-indigo-100"
+                class="inline-flex items-center gap-1.5 rounded-md bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 ring-1 ring-primary-200 ring-inset transition-colors hover:bg-primary-100"
                 @click="removeQuickFilter"
             >
                 {{ quickFilterText }}
@@ -141,7 +141,7 @@ function removeQuickFilter() {
                     <tbody class="divide-y divide-slate-100">
                         <tr v-for="row in result.rows" :key="row.id" class="transition-colors hover:bg-slate-50">
                             <td class="px-5 py-3">
-                                <RouterLink :to="{ name: 'item-detail', params: { id: row.id } }" class="font-mono text-[13px] font-medium text-indigo-600 hover:underline">{{
+                                <RouterLink :to="{ name: 'item-detail', params: { id: row.id } }" class="font-mono text-[13px] font-medium text-primary-600 hover:underline">{{
                                     row.item_no
                                 }}</RouterLink>
                                 <p v-if="row.memo" class="mt-0.5 max-w-xs truncate text-[11px] text-slate-400">{{ row.memo }}</p>

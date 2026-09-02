@@ -139,7 +139,7 @@ function downloadResult() {
 
                 <div
                     class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors"
-                    :class="dragging ? 'border-indigo-400 bg-indigo-50/60' : 'border-slate-300 bg-slate-50/60'"
+                    :class="dragging ? 'border-primary-400 bg-primary-50/60' : 'border-slate-300 bg-slate-50/60'"
                     @dragover.prevent="dragging = true"
                     @dragleave.prevent="dragging = false"
                     @drop.prevent="onDrop"

@@ -12,14 +12,14 @@ const catalog = useCatalogStore();
 
 /** 件数カード。クリックで該当条件を設定した品番一覧へ遷移する。 */
 const cards = computed(() => [
-    { key: "items", label: "登録品番数", value: catalog.stats.itemCount, unit: "件", icon: "items", tone: "indigo", to: { name: "items" } },
+    { key: "items", label: "登録品番数", value: catalog.stats.itemCount, unit: "件", icon: "items", tone: "primary", to: { name: "items" } },
     { key: "skus", label: "登録SKU数", value: catalog.stats.skuCount, unit: "件", icon: "box", tone: "sky", to: { name: "items" } },
     { key: "parent", label: "親ASIN未入力の品番", value: catalog.stats.noParentAsinCount, unit: "件", icon: "alert", tone: "amber", to: { name: "items", query: { filter: "no_parent_asin" } } },
     { key: "child", label: "子ASIN未入力のSKU", value: catalog.stats.noChildAsinCount, unit: "件", icon: "alert", tone: "rose", to: { name: "items", query: { filter: "no_child_asin" } } },
 ]);
 
 const toneClass: Record<string, string> = {
-    indigo: "bg-indigo-50 text-indigo-600",
+    primary: "bg-primary-50 text-primary-600",
     sky: "bg-sky-50 text-sky-600",
     amber: "bg-amber-50 text-amber-600",
     rose: "bg-rose-50 text-rose-600",
@@ -44,11 +44,11 @@ const toneClass: Record<string, string> = {
                 v-for="card in cards"
                 :key="card.key"
                 :to="card.to"
-                class="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md"
+                class="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md"
             >
                 <div class="flex items-start justify-between">
                     <span class="flex h-9 w-9 items-center justify-center rounded-lg" :class="toneClass[card.tone]"><AppIcon :name="card.icon" :size="18" /></span>
-                    <AppIcon name="arrow-right" :size="16" class="text-slate-300 transition-colors group-hover:text-indigo-500" />
+                    <AppIcon name="arrow-right" :size="16" class="text-slate-300 transition-colors group-hover:text-primary-500" />
                 </div>
                 <p class="mt-4 text-xs font-medium text-slate-500">{{ card.label }}</p>
                 <p class="mt-1 flex items-baseline gap-1">
@@ -78,7 +78,7 @@ const toneClass: Record<string, string> = {
                     <tbody class="divide-y divide-slate-100">
                         <tr v-for="row in catalog.recentItems" :key="row.id" class="transition-colors hover:bg-slate-50">
                             <td class="px-5 py-3">
-                                <RouterLink :to="{ name: 'item-detail', params: { id: row.id } }" class="font-mono text-[13px] font-medium text-indigo-600 hover:underline">{{
+                                <RouterLink :to="{ name: 'item-detail', params: { id: row.id } }" class="font-mono text-[13px] font-medium text-primary-600 hover:underline">{{
                                     row.item_no
                                 }}</RouterLink>
                             </td>

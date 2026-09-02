@@ -23,7 +23,7 @@ const selectId = useId();
 const selectClass = computed(() => [
     "w-full appearance-none rounded-lg border bg-white pr-8 text-slate-900 transition-colors focus:outline focus:outline-2 disabled:bg-slate-100 disabled:text-slate-500",
     props.size === "sm" ? "h-8 pl-2 text-xs" : "h-10 pl-3 text-sm",
-    props.error ? "border-rose-400 focus:outline-rose-500" : "border-slate-300 focus:border-indigo-500 focus:outline-indigo-500/40",
+    props.error ? "border-rose-400 focus:outline-rose-500" : "border-slate-300 focus:border-primary-500 focus:outline-primary-500/40",
     props.modelValue === null || props.modelValue === "" ? "text-slate-400" : "",
 ]);
 

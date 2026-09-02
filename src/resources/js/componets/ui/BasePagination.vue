@@ -50,7 +50,7 @@ function go(page: number) {
                     v-else
                     type="button"
                     class="h-8 min-w-8 rounded-lg border px-2 text-xs font-medium transition-colors"
-                    :class="entry === page ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 text-slate-600 hover:bg-slate-50'"
+                    :class="entry === page ? 'border-primary-600 bg-primary-600 text-white' : 'border-slate-300 text-slate-600 hover:bg-slate-50'"
                     @click="go(entry)"
                 >
                     {{ entry }}

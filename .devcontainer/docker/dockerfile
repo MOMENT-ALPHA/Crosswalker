@@ -27,7 +27,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --version=${COMPOSER_VER
 # Node.js
 RUN curl -fsSL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
     dnf install -y nodejs && \
-    npm install -g npm@${NPM_VERSION}
+    npm install -g npm@${NPM_VERSION} @openai/codex
 
 # Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash

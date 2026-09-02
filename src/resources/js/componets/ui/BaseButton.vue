@@ -19,7 +19,7 @@ const props = withDefaults(
 );
 
 const variantClass: Record<Variant, string> = {
-    primary: "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:border-indigo-700 focus-visible:outline-indigo-600",
+    primary: "bg-primary-600 text-white border-primary-600 hover:bg-primary-700 hover:border-primary-700 focus-visible:outline-primary-600",
     secondary: "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-slate-400",
     ghost: "bg-transparent text-slate-600 border-transparent hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-slate-400",
     danger: "bg-rose-600 text-white border-rose-600 hover:bg-rose-700 hover:border-rose-700 focus-visible:outline-rose-600",
