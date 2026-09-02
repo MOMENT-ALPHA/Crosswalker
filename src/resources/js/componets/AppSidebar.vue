@@ -2,11 +2,9 @@
 import { RouterLink, useRoute } from "vue-router";
 import AppIcon from "@/componets/AppIcon.vue";
 import { NAV_ITEMS } from "@/utils/consts";
-import { useAuthStore } from "@/stores/auth";
 import { useUiStore } from "@/stores/ui";
 
 const route = useRoute();
-const auth = useAuthStore();
 const ui = useUiStore();
 
 /** 品番配下の画面ではサイドバーの「品番一覧」を選択状態にする */
@@ -41,15 +39,5 @@ function isActive(name: string): boolean {
                 <span class="text-[10px] tracking-wider text-slate-300">{{ nav.screenId }}</span>
             </RouterLink>
         </nav>
-
-        <div class="border-t border-slate-200 p-3">
-            <div class="flex items-center gap-3 rounded-lg px-3 py-2.5">
-                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500"><AppIcon name="person" :size="16" /></span>
-                <span class="min-w-0 flex-1">
-                    <span class="block truncate text-xs font-medium text-slate-900">{{ auth.loginId || "guest" }}</span>
-                    <span class="block text-[10px] text-slate-400">ログイン中</span>
-                </span>
-            </div>
-        </div>
     </aside>
 </template>

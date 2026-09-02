@@ -161,7 +161,6 @@ function removeQuickFilter() {
                                     <div class="flex items-center justify-end gap-1">
                                         <BaseButton size="sm" variant="ghost" icon="visibility" @click="$router.push({ name: 'item-detail', params: { id: row.id } })">詳細</BaseButton>
                                         <BaseButton size="sm" variant="ghost" icon="edit" @click="$router.push({ name: 'item-edit', params: { id: row.id } })">編集</BaseButton>
-                                        <BaseButton size="sm" variant="ghost" icon="content_copy" @click="$router.push({ name: 'item-create', query: { from: String(row.id) } })">複製</BaseButton>
                                     </div>
                                 </td>
                             </tr>

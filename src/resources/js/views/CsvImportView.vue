@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import AppIcon from "@/componets/AppIcon.vue";
 import BaseAlert from "@/componets/ui/BaseAlert.vue";
 import BaseBadge from "@/componets/ui/BaseBadge.vue";
@@ -24,7 +24,7 @@ const summary = ref<CsvValidationSummary | null>(null);
 const result = ref<CsvImportResult | null>(null);
 const fileError = ref("");
 
-const canValidate = computed(() => file.value !== null && !validating.value);
+const loadingMessage = computed(() => (validating.value ? "CSVファイルを検証しています..." : "CSVファイルを取り込んでいます..."));
 const canImport = computed(() => summary.value !== null && summary.value.error_count === 0 && summary.value.total_rows > 0 && result.value === null);
 
 const summaryCards = computed(() => [
@@ -32,6 +32,14 @@ const summaryCards = computed(() => [
     { key: "update", label: "更新", value: summary.value?.update_count ?? 0, tone: "sky" },
     { key: "unchanged", label: "変更なし", value: summary.value?.unchanged_count ?? 0, tone: "slate" },
     { key: "error", label: "エラー", value: summary.value?.error_count ?? 0, tone: "rose" },
+]);
+
+const resultCards = computed(() => [
+    { key: "created-items", label: "品番 新規", value: result.value?.created_items ?? 0, tone: "emerald" },
+    { key: "updated-items", label: "品番 更新", value: result.value?.updated_items ?? 0, tone: "sky" },
+    { key: "created-skus", label: "SKU 新規", value: result.value?.created_skus ?? 0, tone: "emerald" },
+    { key: "updated-skus", label: "SKU 更新", value: result.value?.updated_skus ?? 0, tone: "sky" },
+    { key: "unchanged", label: "変更なし", value: result.value?.unchanged ?? 0, tone: "slate" },
 ]);
 
 const toneClass: Record<string, string> = {
@@ -43,6 +51,12 @@ const toneClass: Record<string, string> = {
 
 const statusLabel: Record<string, string> = { create: "新規登録", update: "更新", unchanged: "変更なし", error: "エラー" };
 
+function openFilePicker() {
+    if (!fileInput.value) return;
+    fileInput.value.value = "";
+    fileInput.value.click();
+}
+
 function downloadTemplate() {
     const content = [toCsvLine([...CSV_HEADERS]), toCsvLine(CSV_TEMPLATE_SAMPLE)].join("\r\n");
     downloadCsv("crosswalker_template.csv", content);
@@ -50,6 +64,8 @@ function downloadTemplate() {
 }
 
 async function acceptFile(selected: File | null | undefined) {
+    file.value = null;
+    fileText.value = "";
     summary.value = null;
     result.value = null;
     fileError.value = "";
@@ -66,6 +82,7 @@ async function acceptFile(selected: File | null | undefined) {
 
     file.value = selected;
     fileText.value = await selected.text();
+    await validate();
 }
 
 function onFileChange(event: Event) {
@@ -77,29 +94,26 @@ function onDrop(event: DragEvent) {
     void acceptFile(event.dataTransfer?.files?.[0]);
 }
 
-function clearFile() {
-    file.value = null;
-    fileText.value = "";
-    summary.value = null;
-    result.value = null;
-    fileError.value = "";
-    if (fileInput.value) fileInput.value.value = "";
-}
-
-function validate() {
+async function validate() {
     if (!file.value) return;
     validating.value = true;
-    summary.value = catalog.validateCsv(file.value.name, fileText.value);
-    result.value = null;
-    validating.value = false;
-
-    if (summary.value.error_count > 0) ui.notify(`検証で${summary.value.error_count}件のエラーが見つかりました。`, "error");
-    else ui.notify("検証が完了しました。取込を実行できます。");
+    await nextTick();
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+    try {
+        summary.value = catalog.validateCsv(file.value.name, fileText.value);
+        result.value = null;
+        if (summary.value.error_count > 0) ui.notify(`検証で${summary.value.error_count}件のエラーが見つかりました。`, "error");
+        else ui.notify("検証完了。取込を実行できます。");
+    } finally {
+        validating.value = false;
+    }
 }
 
-function runImport() {
+async function runImport() {
     if (!summary.value || summary.value.error_count > 0) return;
     importing.value = true;
+    await nextTick();
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
     try {
         result.value = catalog.commitCsv(summary.value);
         ui.notify("CSVの取込が完了しました。");
@@ -131,6 +145,12 @@ function downloadResult() {
 
 <template>
     <div class="space-y-5">
+        <div v-if="validating || importing" class="fixed inset-0 z-60 flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px]" role="status" aria-live="polite">
+            <div class="flex items-center gap-3 rounded-xl bg-white px-5 py-4 text-sm font-medium text-slate-700 shadow-xl">
+                <AppIcon name="progress_activity" :size="22" class="animate-spin text-primary-500" />
+                <span>{{ loadingMessage }}</span>
+            </div>
+        </div>
         <div class="grid gap-5 xl:grid-cols-3">
             <BaseCard title="CSVファイルの指定" description="ファイル選択またはドラッグアンドドロップでCSVを指定します。" class="xl:col-span-2">
                 <template #actions>
@@ -147,26 +167,12 @@ function downloadResult() {
                     <span class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm ring-1 ring-slate-200"><AppIcon name="upload" :size="20" /></span>
                     <p class="mt-3 text-sm font-medium text-slate-700">CSVファイルをここにドロップ</p>
                     <p class="mt-1 text-xs text-slate-500">または</p>
-                    <BaseButton class="mt-3" variant="secondary" icon="description" @click="fileInput?.click()">ファイルを選択</BaseButton>
+                    <BaseButton class="mt-3" variant="secondary" icon="description" @click="openFilePicker">ファイルを選択</BaseButton>
                     <p class="mt-3 text-[11px] text-slate-400">UTF-8 / ヘッダー行必須 / 最大 {{ CSV_MAX_SIZE_MB }}MB</p>
                     <input ref="fileInput" type="file" accept=".csv,text/csv" class="hidden" @change="onFileChange" />
                 </div>
 
                 <BaseAlert v-if="fileError" tone="danger" class="mt-4">{{ fileError }}</BaseAlert>
-
-                <div v-if="file" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
-                    <div class="flex min-w-0 items-center gap-2.5">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><AppIcon name="csv" :size="18" /></span>
-                        <span class="min-w-0">
-                            <span class="block truncate text-sm font-medium text-slate-900">{{ file.name }}</span>
-                            <span class="block text-[11px] text-slate-500">{{ formatNumber(Math.ceil(file.size / 1024)) }} KB</span>
-                        </span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <BaseButton size="sm" variant="ghost" icon="close" @click="clearFile">取り消し</BaseButton>
-                        <BaseButton size="sm" variant="primary" icon="check" :disabled="!canValidate" :loading="validating" @click="validate">検証</BaseButton>
-                    </div>
-                </div>
             </BaseCard>
 
             <BaseCard title="CSV列" description="要件定義書 §5.1 の列構成">
@@ -183,7 +189,7 @@ function downloadResult() {
             </BaseCard>
         </div>
 
-        <BaseCard v-if="summary" title="検証結果" :description="summary.file_name">
+        <BaseCard v-if="summary && !result" title="検証結果" :description="summary.file_name">
             <template #actions>
                 <BaseButton size="sm" variant="secondary" icon="download" @click="downloadResult">処理結果ダウンロード</BaseButton>
                 <BaseButton size="sm" variant="primary" icon="upload" :disabled="!canImport" :loading="importing" @click="runImport">取込実行</BaseButton>
@@ -227,28 +233,14 @@ function downloadResult() {
                 <BaseButton size="sm" variant="ghost" icon="arrow_forward" @click="$router.push({ name: 'items' })">品番一覧で確認</BaseButton>
             </template>
 
-            <dl class="grid gap-4 sm:grid-cols-5">
-                <div>
-                    <dt class="text-xs text-slate-500">品番 新規</dt>
-                    <dd class="mt-1 text-xl font-semibold text-slate-900">{{ formatNumber(result.created_items) }}</dd>
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <div v-for="card in resultCards" :key="card.key" class="rounded-lg border px-4 py-3" :class="toneClass[card.tone]">
+                    <p class="text-xs font-medium">{{ card.label }}</p>
+                    <p class="mt-1 text-2xl font-semibold tabular-nums">{{ formatNumber(card.value) }}</p>
                 </div>
-                <div>
-                    <dt class="text-xs text-slate-500">品番 更新</dt>
-                    <dd class="mt-1 text-xl font-semibold text-slate-900">{{ formatNumber(result.updated_items) }}</dd>
-                </div>
-                <div>
-                    <dt class="text-xs text-slate-500">SKU 新規</dt>
-                    <dd class="mt-1 text-xl font-semibold text-slate-900">{{ formatNumber(result.created_skus) }}</dd>
-                </div>
-                <div>
-                    <dt class="text-xs text-slate-500">SKU 更新</dt>
-                    <dd class="mt-1 text-xl font-semibold text-slate-900">{{ formatNumber(result.updated_skus) }}</dd>
-                </div>
-                <div>
-                    <dt class="text-xs text-slate-500">取込日時</dt>
-                    <dd class="mt-1 text-sm text-slate-700">{{ formatDateTime(result.imported_at) }}</dd>
-                </div>
-            </dl>
+            </div>
+
+            <p class="mt-3 text-xs text-slate-500">取込日時: {{ formatDateTime(result.imported_at) }}</p>
         </BaseCard>
     </div>
 </template>

@@ -47,7 +47,7 @@ export function createEmptySkuRow(): SkuFormRow {
     };
 }
 
-/** SKU入力行が未入力かどうか（複製時の判定などに使用） */
+/** SKU入力行が未入力かどうか */
 export function isEmptySkuRow(row: SkuFormRow): boolean {
     return [row.sku_code, row.child_asin, row.tq_item_no, row.tq_color_no, row.tq_size, row.memo].every((value) => trimValue(value) === "");
 }

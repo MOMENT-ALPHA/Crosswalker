@@ -57,7 +57,6 @@ function confirmDelete() {
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <BaseButton variant="primary" icon="edit" @click="$router.push({ name: 'item-edit', params: { id: item.id } })">編集</BaseButton>
-                <BaseButton variant="secondary" icon="content_copy" @click="$router.push({ name: 'item-create', query: { from: String(item.id) } })">複製</BaseButton>
                 <BaseButton variant="danger-ghost" icon="delete" @click="deleteOpen = true">削除</BaseButton>
             </div>
         </div>

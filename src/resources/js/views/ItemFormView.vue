@@ -19,11 +19,9 @@ const router = useRouter();
 const catalog = useCatalogStore();
 const ui = useUiStore();
 
-/** 編集対象の品番ID（新規・複製時は null） */
+/** 編集対象の品番ID（新規登録時は null） */
 const editingId = computed(() => (route.name === "item-edit" ? Number(route.params.id) : null));
-/** 複製元の品番ID */
-const duplicateFromId = computed(() => (route.query.from ? Number(route.query.from) : null));
-const mode = computed<"create" | "edit" | "duplicate">(() => (editingId.value !== null ? "edit" : duplicateFromId.value !== null ? "duplicate" : "create"));
+const mode = computed<"create" | "edit">(() => (editingId.value !== null ? "edit" : "create"));
 
 const form = reactive<ItemFormValues>({ item_no: "", brand_id: null, category_id: null, parent_asin: "", memo: "", skus: [createEmptySkuRow()] });
 const errors = ref<ValidationResult>({ item: {}, skus: {}, global: [] });
@@ -40,7 +38,7 @@ const categoryOptions = computed(() => toSelectOptions(catalog.categories));
 const dirty = computed(() => JSON.stringify(form) !== initialSnapshot.value);
 const notFound = computed(() => editingId.value !== null && !catalog.findItem(editingId.value));
 
-const pageTitle = computed(() => (mode.value === "edit" ? "品番を編集" : mode.value === "duplicate" ? "品番を複製して登録" : "品番を新規登録"));
+const pageTitle = computed(() => (mode.value === "edit" ? "品番を編集" : "品番を新規登録"));
 
 let pendingResolve: ((value: boolean) => void) | null = null;
 
@@ -63,15 +61,6 @@ onMounted(() => {
                 tq_size: sku.tq_size,
                 memo: sku.memo,
             }));
-        }
-    } else if (duplicateFromId.value !== null) {
-        // 複製時はブランド・カテゴリとSKU行数のみ引き継ぐ（§4.5 複製時の初期値）
-        const source = catalog.findItem(duplicateFromId.value);
-        if (source) {
-            form.brand_id = source.brand_id;
-            form.category_id = source.category_id;
-            form.memo = source.memo;
-            form.skus = source.skus.map(() => createEmptySkuRow());
         }
     }
 
@@ -191,7 +180,6 @@ function confirmDelete() {
                 <BaseButton size="sm" variant="ghost" icon="arrow_back" @click="cancel">戻る</BaseButton>
                 <div class="mt-2 flex items-center gap-2.5">
                     <h2 class="text-xl font-semibold text-slate-900">{{ pageTitle }}</h2>
-                    <BaseBadge v-if="mode === 'duplicate'" tone="brand">複製</BaseBadge>
                     <BaseBadge v-if="dirty" tone="warning">未保存</BaseBadge>
                 </div>
             </div>
@@ -206,10 +194,6 @@ function confirmDelete() {
             <ul class="mt-1 list-disc space-y-0.5 pl-4">
                 <li v-for="message in errors.global" :key="message">{{ message }}</li>
             </ul>
-        </BaseAlert>
-
-        <BaseAlert v-if="mode === 'duplicate'" tone="info">
-            ブランド・カテゴリ・SKUの行数を複製元から引き継いでいます。品番コード・親ASIN・SKUコード・子ASIN・TQ各項目は新しい値を入力してください。
         </BaseAlert>
 
         <BaseCard title="品番情報">
