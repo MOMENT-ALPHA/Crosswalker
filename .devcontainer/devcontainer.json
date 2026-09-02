@@ -1,5 +1,5 @@
 {
-  "name": "Crosswalk",
+  "name": "Crosswalker",
   "dockerComposeFile": "./docker/docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",

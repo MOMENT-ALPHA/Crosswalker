@@ -49,7 +49,7 @@ async function submit() {
                 <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm">
                     <AppIcon name="link" :size="24" />
                 </span>
-                <span class="mt-3 text-base font-semibold text-slate-900">Crosswalk</span>
+                <span class="mt-3 text-base font-semibold text-slate-900">Crosswalker</span>
                 <span class="mt-1 text-xs text-slate-500">商品識別子管理システム</span>
             </div>
 

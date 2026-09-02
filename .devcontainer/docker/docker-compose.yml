@@ -1,9 +1,9 @@
-name: crosswalk
+name: crosswalker
 
 services:
   # PHP
   app:
-    container_name: crosswalk-app
+    container_name: crosswalker-app
     build:
       context: ../../
       dockerfile: .devcontainer/docker/dockerfile
@@ -20,11 +20,11 @@ services:
 
   # MySQL
   db:
-    container_name: crosswalk-db
+    container_name: crosswalker-db
     image: mysql:8.0.39
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: crosswalk
+      MYSQL_DATABASE: crosswalker
       MYSQL_USER: developer
       MYSQL_PASSWORD: developer
       TZ: Asia/Tokyo
@@ -34,10 +34,10 @@ services:
       - volume:/var/lib/mysql
     networks:
       - network
-  
+
   # phpMyAdmin
   phpmyadmin:
-    container_name: crosswalk-pma
+    container_name: crosswalker-pma
     image: phpmyadmin:latest
     environment:
       PMA_HOST: db

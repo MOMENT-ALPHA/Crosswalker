@@ -45,7 +45,7 @@ const statusLabel: Record<string, string> = { create: "新規登録", update: "�
 
 function downloadTemplate() {
     const content = [toCsvLine([...CSV_HEADERS]), toCsvLine(CSV_TEMPLATE_SAMPLE)].join("\r\n");
-    downloadCsv("crosswalk_template.csv", content);
+    downloadCsv("crosswalker_template.csv", content);
     ui.notify("CSVテンプレートをダウンロードしました。");
 }
 
@@ -124,7 +124,7 @@ function downloadResult() {
         lines.push(toCsvLine([row.__line, row.item_no ?? "", row.sku_code ?? "", statusLabel[current.statuses[row.__line] ?? "error"], (errorsByLine.get(row.__line) ?? []).join(" / ")]));
     });
 
-    downloadCsv(`crosswalk_result_${current.file_name.replace(/\.csv$/i, "")}.csv`, lines.join("\r\n"));
+    downloadCsv(`crosswalker_result_${current.file_name.replace(/\.csv$/i, "")}.csv`, lines.join("\r\n"));
     ui.notify("処理結果をダウンロードしました。");
 }
 </script>
