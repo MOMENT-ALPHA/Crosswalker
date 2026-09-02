@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@source "../views";
+@source "../js";
+
+@theme {
+    --font-sans:
+        "Instrument Sans", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+        "Segoe UI Symbol", "Noto Color Emoji";
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        @apply bg-slate-50 text-slate-900 antialiased;
+    }
+
+    /* 数値列を揃えるための等幅数字 */
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
+    }
+}

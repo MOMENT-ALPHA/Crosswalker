@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "jsx": "preserve",
+        "jsxImportSource": "vue",
+        "noImplicitThis": true,
+        "strict": true,
+        "verbatimModuleSyntax": true,
+        "isolatedModules": true,
+        "target": "ESNext",
+        "tsBuildInfoFile": "./node_modules/.cache/vue-tsc.tsbuildinfo",
+        "useDefineForClassFields": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "composite": true,
+        "paths": {
+            "@/*": ["./resources/js/*"],
+            "@css/*": ["./resources/css/*"]
+        }
+    },
+    "include": ["resources/js/**/*.js", "resources/js/**/*.ts", "resources/js/**/*.d.ts", "resources/js/**/*.vue", "resources/css/**/*.css"]
+}

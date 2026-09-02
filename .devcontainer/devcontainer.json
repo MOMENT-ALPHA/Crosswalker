@@ -1,0 +1,53 @@
+{
+  "name": "Crosswalk",
+  "dockerComposeFile": "./docker/docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "files.eol": "\n",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "[jsonc]": {
+          "editor.defaultFormatter": "vscode.json-language-features"
+        },
+        "[php]": {
+          "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
+        },
+        "[blade]": {
+          "editor.defaultFormatter": "shufo.vscode-blade-formatter"
+        },
+        "[vue]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        }
+      },
+      "extensions": [
+        // language pack
+        "ms-ceintl.vscode-language-pack-ja",
+        // git
+        "mhutchie.git-graph",
+        "donjayamanne.githistory",
+        "eamodio.gitlens",
+        // php
+        "bmewburn.vscode-intelephense-client",
+        "neilbrayfield.php-docblocker",
+        // Other
+        "github.copilot",
+        // laravel
+        "onecentlin.laravel-extension-pack",
+        // vue
+        "vue.volar",
+        // tailwindcss
+        "bradlc.vscode-tailwindcss",
+        // prettier
+        "esbenp.prettier-vscode",
+        // Claude Code
+        "anthropic.claude-code",
+        // Codex
+        "openai.chatgpt"
+      ]
+    }
+  }
+}

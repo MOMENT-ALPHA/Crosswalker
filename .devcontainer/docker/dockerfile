@@ -1,0 +1,36 @@
+# OS - AlmaLinux 9.6
+FROM almalinux:9.6
+
+# 環境変数の設定
+ENV PHP_VERSION=8.3
+ENV COMPOSER_VERSION=2.8.12
+ENV NODE_VERSION=24
+ENV NPM_VERSION=latest
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Setup
+RUN dnf -y update && \
+    dnf -y install epel-release git unzip findutils yum-utils ca-certificates && \
+    dnf config-manager --set-enabled crb
+
+# PHP
+RUN dnf -y install https://rpms.remirepo.net/enterprise/remi-release-9.rpm && \
+    dnf module reset php -y && \
+    dnf module enable php:remi-${PHP_VERSION} -y && \
+    dnf install -y php php-cli php-fpm php-mbstring php-xml php-pdo php-mysqlnd php-common php-opcache php-gd php-curl php-zip php-bcmath php-intl php-devel php-pecl-xdebug && \
+    dnf clean all
+
+# Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --version=${COMPOSER_VERSION} && \
+    mv composer.phar /usr/local/bin/composer
+
+# Node.js
+RUN curl -fsSL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
+    dnf install -y nodejs && \
+    npm install -g npm@${NPM_VERSION}
+
+# Claude Code
+RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# cleanup
+RUN dnf clean all
