@@ -50,9 +50,6 @@ function confirmDelete() {
                 <BaseButton size="sm" variant="ghost" icon="arrow_back" @click="$router.push({ name: 'items' })">品番一覧へ戻る</BaseButton>
                 <div class="mt-2 flex flex-wrap items-center gap-2.5">
                     <h2 class="font-mono text-xl font-semibold text-slate-900">{{ item.item_no }}</h2>
-                    <BaseBadge tone="brand">{{ catalog.brandName(item.brand_id) }}</BaseBadge>
-                    <BaseBadge>{{ catalog.categoryName(item.category_id) }}</BaseBadge>
-                    <BaseBadge tone="success">SKU {{ item.skus.length }}件</BaseBadge>
                     <BaseBadge :tone="item.is_active ? 'success' : 'neutral'">{{ item.is_active ? "有効" : "無効" }}</BaseBadge>
                 </div>
             </div>
