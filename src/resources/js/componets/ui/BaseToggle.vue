@@ -4,12 +4,12 @@ const emit = defineEmits<{ "update:modelValue": [value: boolean] }>();
 </script>
 
 <template>
-    <label class="flex cursor-pointer items-start gap-3">
+    <label class="flex cursor-pointer items-center gap-3">
         <button
             type="button"
             role="switch"
             :aria-checked="modelValue"
-            class="relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+            class="relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             :class="modelValue ? 'bg-primary-600' : 'bg-slate-300'"
             @click="emit('update:modelValue', !modelValue)"
         >
