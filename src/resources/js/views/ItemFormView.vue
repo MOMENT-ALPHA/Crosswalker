@@ -275,13 +275,13 @@ async function confirmDelete() {
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         <tr v-for="(row, index) in form.skus" :key="row.key" class="align-top" :class="errors.skus[row.key] ? 'bg-rose-50/40' : ''">
-                            <td class="px-3 py-2.5 text-xs text-slate-400">{{ index + 1 }}</td>
-                            <td class="px-3 py-2.5"><BaseInput v-model="row.sku_code" size="sm" placeholder="fisi-05-1-10" :error="skuError(row.key, 'sku_code')" /></td>
-                            <td class="px-3 py-2.5"><BaseToggle v-model="row.is_active" :label="row.is_active ? '有効' : '無効'" /></td>
-                            <td class="px-3 py-2.5"><BaseInput v-model="row.child_asin" size="sm" placeholder="B09EXAMPLE1" :error="skuError(row.key, 'child_asin')" /></td>
-                            <td class="px-3 py-2.5"><BaseInput v-model="row.tq_item_no" size="sm" placeholder="FISI05" :error="skuError(row.key, 'tq_item_no')" /></td>
-                            <td class="px-3 py-2.5"><BaseInput v-model="row.tq_color_no" size="sm" placeholder="1" :error="skuError(row.key, 'tq_color_no')" /></td>
-                            <td class="px-3 py-2.5"><BaseInput v-model="row.tq_size" size="sm" placeholder="10" :error="skuError(row.key, 'tq_size')" /></td>
+                            <td class="align-middle px-3 py-2.5 text-xs text-slate-400">{{ index + 1 }}</td>
+                            <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.sku_code" size="sm" placeholder="fisi-05-1-10" :error="skuError(row.key, 'sku_code')" /></td>
+                            <td class="align-middle px-3 py-2.5"><BaseToggle v-model="row.is_active" :label="row.is_active ? '有効' : '無効'" /></td>
+                            <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.child_asin" size="sm" placeholder="B09EXAMPLE1" :error="skuError(row.key, 'child_asin')" /></td>
+                            <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.tq_item_no" size="sm" placeholder="FISI05" :error="skuError(row.key, 'tq_item_no')" /></td>
+                            <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.tq_color_no" size="sm" placeholder="1" :error="skuError(row.key, 'tq_color_no')" /></td>
+                            <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.tq_size" size="sm" placeholder="10" :error="skuError(row.key, 'tq_size')" /></td>
                             <td class="px-3 py-2.5">
                                 <button
                                     type="button"

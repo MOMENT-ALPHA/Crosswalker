@@ -21,7 +21,7 @@ const emit = defineEmits<{ "update:modelValue": [value: string] }>();
 const inputId = useId();
 
 const inputClass = computed(() => [
-    "w-full rounded-lg border bg-white text-slate-900 placeholder:text-slate-400 transition-colors focus:outline focus:outline-2 focus:outline-offset-0 disabled:bg-slate-100 disabled:text-slate-500",
+    "w-full rounded-lg border bg-white pt-0 pb-0.5 text-slate-900 placeholder:text-slate-400 transition-colors focus:outline focus:outline-2 focus:outline-offset-0 disabled:bg-slate-100 disabled:text-slate-500",
     props.size === "sm" ? "h-8 px-2 text-xs" : "h-10 px-3 text-sm",
     props.error ? "border-rose-400 focus:outline-rose-500" : "border-slate-300 focus:border-primary-500 focus:outline-primary-500/40",
 ]);
