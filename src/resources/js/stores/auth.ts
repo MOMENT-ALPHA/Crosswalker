@@ -1,29 +1,36 @@
 import { defineStore } from "pinia";
-import { DEMO_LOGIN_ID, DEMO_PASSWORD } from "@/utils/consts";
+import axios from "axios";
+import { csrf, http } from "@/utils/http";
 
-/**
- * モック認証ストア。
- * バックエンド接続時は login() をセッション認証APIの呼び出しに差し替える。
- */
 export const useAuthStore = defineStore("auth", {
-    state: () => ({
-        loginId: "" as string,
-        authenticated: false,
-    }),
+    state: () => ({ loginId: "", authenticated: false }),
     actions: {
-        async login(loginId: string, password: string): Promise<boolean> {
-            await new Promise((resolve) => window.setTimeout(resolve, 400));
-            if (loginId.trim() === DEMO_LOGIN_ID && password === DEMO_PASSWORD) {
-                this.loginId = loginId.trim();
+        async restore(): Promise<void> {
+            try {
+                const { data } = await http.get<{ user: { login_id: string } }>("/me");
+                this.loginId = data.user.login_id;
                 this.authenticated = true;
-                return true;
+            } catch (error) {
+                if (!axios.isAxiosError(error) || error.response?.status !== 401) throw error;
+                this.$reset();
             }
-            return false;
         },
-        logout() {
-            this.loginId = "";
-            this.authenticated = false;
+        async login(loginId: string, password: string): Promise<boolean> {
+            await csrf();
+            try {
+                const { data } = await http.post<{ user: { login_id: string } }>("/login", { login_id: loginId.trim(), password });
+                this.loginId = data.user.login_id;
+                this.authenticated = true;
+                await csrf();
+                return true;
+            } catch (error) {
+                if (axios.isAxiosError(error) && error.response?.status === 401) return false;
+                throw error;
+            }
+        },
+        async logout(): Promise<void> {
+            await http.post("/logout");
+            this.$reset();
         },
     },
-    persist: true,
 });

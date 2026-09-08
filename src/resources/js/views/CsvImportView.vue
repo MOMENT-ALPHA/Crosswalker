@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from "vue";
+import { computed, ref } from "vue";
 import AppIcon from "@/componets/AppIcon.vue";
 import BaseAlert from "@/componets/ui/BaseAlert.vue";
 import BaseBadge from "@/componets/ui/BaseBadge.vue";
@@ -7,8 +7,9 @@ import BaseButton from "@/componets/ui/BaseButton.vue";
 import BaseCard from "@/componets/ui/BaseCard.vue";
 import { useCatalogStore } from "@/stores/catalog";
 import { useUiStore } from "@/stores/ui";
-import { CSV_COLUMNS, CSV_HEADERS, CSV_MAX_SIZE_MB, CSV_TEMPLATE_SAMPLE } from "@/utils/consts";
-import { downloadCsv, formatDateTime, formatNumber, toCsvLine } from "@/utils/helper";
+import { CSV_COLUMNS, CSV_MAX_SIZE_MB } from "@/utils/consts";
+import { downloadFromApi, errorMessage } from "@/utils/http";
+import { formatDateTime, formatNumber } from "@/utils/helper";
 import type { CsvImportResult, CsvValidationSummary } from "@/types";
 
 const catalog = useCatalogStore();
@@ -16,7 +17,6 @@ const ui = useUiStore();
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const file = ref<File | null>(null);
-const fileText = ref("");
 const dragging = ref(false);
 const validating = ref(false);
 const importing = ref(false);
@@ -49,23 +49,23 @@ const toneClass: Record<string, string> = {
     rose: "border-rose-200 bg-rose-50 text-rose-700",
 };
 
-const statusLabel: Record<string, string> = { create: "新規登録", update: "更新", unchanged: "変更なし", error: "エラー" };
-
 function openFilePicker() {
     if (!fileInput.value) return;
     fileInput.value.value = "";
     fileInput.value.click();
 }
 
-function downloadTemplate() {
-    const content = [toCsvLine([...CSV_HEADERS]), toCsvLine(CSV_TEMPLATE_SAMPLE)].join("\r\n");
-    downloadCsv("crosswalker_template.csv", content);
-    ui.notify("CSVテンプレートをダウンロードしました。");
+async function downloadTemplate() {
+    try {
+        await downloadFromApi("/csv/template", "crosswalker_template.csv");
+    } catch (error) {
+        ui.notify(errorMessage(error), "error");
+    }
 }
 
 async function acceptFile(selected: File | null | undefined) {
+    if (validating.value || importing.value) return;
     file.value = null;
-    fileText.value = "";
     summary.value = null;
     result.value = null;
     fileError.value = "";
@@ -81,7 +81,6 @@ async function acceptFile(selected: File | null | undefined) {
     }
 
     file.value = selected;
-    fileText.value = await selected.text();
     await validate();
 }
 
@@ -95,51 +94,43 @@ function onDrop(event: DragEvent) {
 }
 
 async function validate() {
-    if (!file.value) return;
+    if (!file.value || validating.value || importing.value) return;
     validating.value = true;
-    await nextTick();
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
     try {
-        summary.value = catalog.validateCsv(file.value.name, fileText.value);
+        summary.value = await catalog.validateCsv(file.value);
         result.value = null;
         if (summary.value.error_count > 0) ui.notify(`検証で${summary.value.error_count}件のエラーが見つかりました。`, "error");
         else ui.notify("検証完了。取込を実行できます。");
+    } catch (error) {
+        summary.value = null;
+        fileError.value = errorMessage(error);
+        ui.notify(fileError.value, "error");
     } finally {
         validating.value = false;
     }
 }
 
 async function runImport() {
-    if (!summary.value || summary.value.error_count > 0) return;
+    if (!summary.value || !canImport.value || importing.value) return;
     importing.value = true;
-    await nextTick();
-    await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
     try {
-        result.value = catalog.commitCsv(summary.value);
+        result.value = await catalog.commitCsv(summary.value);
         ui.notify("CSVの取込が完了しました。");
-    } catch {
-        ui.notify("取込中にエラーが発生したため、ファイル全体の更新を取り消しました。", "error");
+    } catch (error) {
+        ui.notify(errorMessage(error), "error");
     } finally {
         importing.value = false;
     }
 }
 
 /** 検証・取込の処理結果をCSVで出力する */
-function downloadResult() {
+async function downloadResult() {
     if (!summary.value) return;
-    const current = summary.value;
-    const errorsByLine = new Map<number, string[]>();
-    current.errors.forEach((error) => {
-        errorsByLine.set(error.line, [...(errorsByLine.get(error.line) ?? []), `${error.column}: ${error.message}`]);
-    });
-
-    const lines = [toCsvLine(["line", "item_no", "sku_code", "result", "message"])];
-    current.rows.forEach((row) => {
-        lines.push(toCsvLine([row.__line, row.item_no ?? "", row.sku_code ?? "", statusLabel[current.statuses[row.__line] ?? "error"], (errorsByLine.get(row.__line) ?? []).join(" / ")]));
-    });
-
-    downloadCsv(`crosswalker_result_${current.file_name.replace(/\.csv$/i, "")}.csv`, lines.join("\r\n"));
-    ui.notify("処理結果をダウンロードしました。");
+    try {
+        await downloadFromApi(`/csv/${summary.value.validation_id}/result`, "crosswalker_result.csv");
+    } catch (error) {
+        ui.notify(errorMessage(error), "error");
+    }
 }
 </script>
 

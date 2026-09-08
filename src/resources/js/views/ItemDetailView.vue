@@ -8,6 +8,7 @@ import BaseEmpty from "@/componets/ui/BaseEmpty.vue";
 import BaseModal from "@/componets/ui/BaseModal.vue";
 import { useCatalogStore } from "@/stores/catalog";
 import { useUiStore } from "@/stores/ui";
+import { errorMessage } from "@/utils/http";
 import { displayValue, formatDateTime } from "@/utils/helper";
 
 const route = useRoute();
@@ -18,6 +19,7 @@ const ui = useUiStore();
 const itemId = computed(() => Number(route.params.id));
 const item = computed(() => catalog.findItem(itemId.value));
 const deleteOpen = ref(false);
+const deleting = ref(false);
 
 const details = computed(() => {
     const current = item.value;
@@ -32,14 +34,21 @@ const details = computed(() => {
     ];
 });
 
-function confirmDelete() {
-    if (!item.value) return;
+async function confirmDelete() {
+    if (!item.value || deleting.value) return;
+    deleting.value = true;
     const label = item.value.item_no;
     const skuCount = item.value.skus.length;
-    catalog.deleteItem(item.value.id);
-    deleteOpen.value = false;
-    ui.notify(`品番「${label}」と所属SKU${skuCount}件を削除しました。`);
-    router.push({ name: "items" });
+    try {
+        await catalog.deleteItem(item.value.id);
+        deleteOpen.value = false;
+        ui.notify(`品番「${label}」と所属SKU${skuCount}件を削除しました。`);
+        await router.push({ name: "items" });
+    } catch (error) {
+        ui.notify(errorMessage(error), "error");
+    } finally {
+        deleting.value = false;
+    }
 }
 </script>
 
@@ -109,7 +118,7 @@ function confirmDelete() {
             </p>
             <template #footer>
                 <BaseButton variant="secondary" @click="deleteOpen = false">キャンセル</BaseButton>
-                <BaseButton variant="danger" icon="delete" @click="confirmDelete">削除する</BaseButton>
+                <BaseButton variant="danger" icon="delete" :loading="deleting" @click="confirmDelete">削除する</BaseButton>
             </template>
         </BaseModal>
     </div>

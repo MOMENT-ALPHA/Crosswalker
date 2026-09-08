@@ -36,7 +36,6 @@ function isActive(name: string): boolean {
             >
                 <AppIcon :name="nav.icon" :size="18" :class="isActive(nav.name) ? 'text-primary-500' : 'text-slate-400 group-hover:text-slate-600'" />
                 <span class="flex-1 font-medium">{{ nav.label }}</span>
-                <span class="text-[10px] tracking-wider text-slate-300">{{ nav.screenId }}</span>
             </RouterLink>
         </nav>
     </aside>

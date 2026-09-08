@@ -25,7 +25,6 @@ interface SeedSku {
     tq_item_no: string;
     tq_color_no: string;
     tq_size: string;
-    memo?: string;
 }
 
 interface SeedItem {
@@ -33,7 +32,6 @@ interface SeedItem {
     brand_id: number;
     category_id: number;
     parent_asin: string;
-    memo?: string;
     created_at: string;
     updated_at: string;
     skus: SeedSku[];
@@ -45,14 +43,14 @@ const seed: SeedItem[] = [
         brand_id: 1,
         category_id: 1,
         parent_asin: "B09T32PVM5",
-        memo: "定番モデル。度数展開は+1.0〜+3.5。",
+
         created_at: "2026-04-02T10:12:00Z",
         updated_at: "2026-08-30T02:41:00Z",
         skus: [
-            { sku_code: "fisi-05-1-10", child_asin: "B09EXAMPLE1", tq_item_no: "FISI05", tq_color_no: "1", tq_size: "10", memo: "ブラック +1.0" },
-            { sku_code: "fisi-05-1-15", child_asin: "B09EXAMPLE2", tq_item_no: "FISI05", tq_color_no: "1", tq_size: "15", memo: "ブラック +1.5" },
-            { sku_code: "fisi-05-2-10", child_asin: "B09EXAMPLE3", tq_item_no: "FISI05", tq_color_no: "2", tq_size: "10", memo: "ブラウン +1.0" },
-            { sku_code: "fisi-05-2-15", child_asin: "", tq_item_no: "FISI05", tq_color_no: "2", tq_size: "15", memo: "ブラウン +1.5 / ASIN未取得" },
+            { sku_code: "fisi-05-1-10", child_asin: "B09EXAMPLE1", tq_item_no: "FISI05", tq_color_no: "1", tq_size: "10" },
+            { sku_code: "fisi-05-1-15", child_asin: "B09EXAMPLE2", tq_item_no: "FISI05", tq_color_no: "1", tq_size: "15" },
+            { sku_code: "fisi-05-2-10", child_asin: "B09EXAMPLE3", tq_item_no: "FISI05", tq_color_no: "2", tq_size: "10" },
+            { sku_code: "fisi-05-2-15", child_asin: "", tq_item_no: "FISI05", tq_color_no: "2", tq_size: "15" },
         ],
     },
     {
@@ -60,7 +58,7 @@ const seed: SeedItem[] = [
         brand_id: 1,
         category_id: 1,
         parent_asin: "B09T32QM41",
-        memo: "",
+
         created_at: "2026-04-11T04:20:00Z",
         updated_at: "2026-08-28T23:05:00Z",
         skus: [
@@ -73,7 +71,7 @@ const seed: SeedItem[] = [
         brand_id: 1,
         category_id: 3,
         parent_asin: "",
-        memo: "親ASIN申請中。",
+
         created_at: "2026-05-06T01:33:00Z",
         updated_at: "2026-08-27T08:12:00Z",
         skus: [
@@ -87,12 +85,12 @@ const seed: SeedItem[] = [
         brand_id: 2,
         category_id: 4,
         parent_asin: "B08LOUPE01",
-        memo: "手持ちルーペ。倍率違いを色番で管理。",
+
         created_at: "2026-03-18T06:45:00Z",
         updated_at: "2026-08-26T11:58:00Z",
         skus: [
-            { sku_code: "lpd-101-1-03", child_asin: "B08LOUPE11", tq_item_no: "LPD101", tq_color_no: "1", tq_size: "03", memo: "3倍" },
-            { sku_code: "lpd-101-1-05", child_asin: "B08LOUPE12", tq_item_no: "LPD101", tq_color_no: "1", tq_size: "05", memo: "5倍" },
+            { sku_code: "lpd-101-1-03", child_asin: "B08LOUPE11", tq_item_no: "LPD101", tq_color_no: "1", tq_size: "03" },
+            { sku_code: "lpd-101-1-05", child_asin: "B08LOUPE12", tq_item_no: "LPD101", tq_color_no: "1", tq_size: "05" },
             { sku_code: "lpd-101-2-03", child_asin: "B08LOUPE13", tq_item_no: "LPD101", tq_color_no: "2", tq_size: "03" },
         ],
     },
@@ -101,7 +99,7 @@ const seed: SeedItem[] = [
         brand_id: 2,
         category_id: 4,
         parent_asin: "B08LOUPE02",
-        memo: "",
+
         created_at: "2026-03-22T02:15:00Z",
         updated_at: "2026-08-21T05:30:00Z",
         skus: [{ sku_code: "lpd-102-1-08", child_asin: "B08LOUPE21", tq_item_no: "LPD102", tq_color_no: "1", tq_size: "08" }],
@@ -111,7 +109,7 @@ const seed: SeedItem[] = [
         brand_id: 2,
         category_id: 5,
         parent_asin: "",
-        memo: "ケース単品。",
+
         created_at: "2026-05-30T09:02:00Z",
         updated_at: "2026-08-20T14:44:00Z",
         skus: [
@@ -124,7 +122,7 @@ const seed: SeedItem[] = [
         brand_id: 3,
         category_id: 3,
         parent_asin: "B07CVIEW01",
-        memo: "PC用。UVカット率99%。",
+
         created_at: "2026-02-08T03:11:00Z",
         updated_at: "2026-08-19T01:20:00Z",
         skus: [
@@ -132,7 +130,7 @@ const seed: SeedItem[] = [
             { sku_code: "cv-2201-01-L", child_asin: "B07CVIEW12", tq_item_no: "CV2201", tq_color_no: "01", tq_size: "L" },
             { sku_code: "cv-2201-02-M", child_asin: "B07CVIEW13", tq_item_no: "CV2201", tq_color_no: "02", tq_size: "M" },
             { sku_code: "cv-2201-02-L", child_asin: "B07CVIEW14", tq_item_no: "CV2201", tq_color_no: "02", tq_size: "L" },
-            { sku_code: "cv-2201-03-M", child_asin: "", tq_item_no: "CV2201", tq_color_no: "03", tq_size: "M", memo: "新色。ASIN登録待ち" },
+            { sku_code: "cv-2201-03-M", child_asin: "", tq_item_no: "CV2201", tq_color_no: "03", tq_size: "M" },
         ],
     },
     {
@@ -140,7 +138,7 @@ const seed: SeedItem[] = [
         brand_id: 3,
         category_id: 2,
         parent_asin: "B07CVIEW02",
-        memo: "",
+
         created_at: "2026-02-19T07:40:00Z",
         updated_at: "2026-08-18T22:06:00Z",
         skus: [
@@ -153,7 +151,7 @@ const seed: SeedItem[] = [
         brand_id: 3,
         category_id: 2,
         parent_asin: "",
-        memo: "OEM案件。",
+
         created_at: "2026-06-12T05:55:00Z",
         updated_at: "2026-08-15T03:18:00Z",
         skus: [{ sku_code: "cv-2210-01-F", child_asin: "", tq_item_no: "CV2210", tq_color_no: "01", tq_size: "F" }],
@@ -163,7 +161,7 @@ const seed: SeedItem[] = [
         brand_id: 4,
         category_id: 2,
         parent_asin: "B0AZURE001",
-        memo: "偏光レンズ。",
+
         created_at: "2026-01-15T08:25:00Z",
         updated_at: "2026-08-12T06:47:00Z",
         skus: [
@@ -177,7 +175,7 @@ const seed: SeedItem[] = [
         brand_id: 4,
         category_id: 1,
         parent_asin: "B0AZURE002",
-        memo: "",
+
         created_at: "2026-01-28T02:05:00Z",
         updated_at: "2026-08-08T09:34:00Z",
         skus: [
@@ -192,7 +190,7 @@ const seed: SeedItem[] = [
         brand_id: 4,
         category_id: 5,
         parent_asin: "",
-        memo: "ノベルティ用。",
+
         created_at: "2026-07-03T04:09:00Z",
         updated_at: "2026-08-05T12:22:00Z",
         skus: [{ sku_code: "az-0040-001-FF", child_asin: "", tq_item_no: "AZ0040", tq_color_no: "001", tq_size: "FF" }],
@@ -202,7 +200,7 @@ const seed: SeedItem[] = [
         brand_id: 1,
         category_id: 4,
         parent_asin: "B09SHIORI01",
-        memo: "スタンド型。",
+
         created_at: "2026-07-21T01:47:00Z",
         updated_at: "2026-08-02T07:15:00Z",
         skus: [
@@ -215,7 +213,7 @@ const seed: SeedItem[] = [
         brand_id: 1,
         category_id: 3,
         parent_asin: "B09SHIORI02",
-        memo: "",
+
         created_at: "2026-08-01T00:30:00Z",
         updated_at: "2026-08-01T00:30:00Z",
         skus: [
@@ -242,7 +240,6 @@ export function createSeedItems(): Item[] {
                 tq_item_no: sku.tq_item_no,
                 tq_color_no: sku.tq_color_no,
                 tq_size: sku.tq_size,
-                memo: sku.memo ?? "",
                 is_active: true,
                 sort_order: skuIndex + 1,
                 created_at: entry.created_at,
@@ -256,7 +253,6 @@ export function createSeedItems(): Item[] {
             brand_id: entry.brand_id,
             category_id: entry.category_id,
             parent_asin: entry.parent_asin,
-            memo: entry.memo ?? "",
             is_active: true,
             created_at: entry.created_at,
             updated_at: entry.updated_at,

@@ -1,6 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AppLayout from "@/layouts/AppLayout.vue";
 import LoginView from "@/views/LoginView.vue";
+import axios from "axios";
+import { useCatalogStore } from "@/stores/catalog";
+import { useUiStore } from "@/stores/ui";
+import { csrf, errorMessage } from "@/utils/http";
+import type { ItemSearchParams } from "@/types";
 import { useAuthStore } from "@/stores/auth";
 
 const router = createRouter({
@@ -65,11 +70,56 @@ const router = createRouter({
     ],
 });
 
-router.beforeEach((to) => {
+let navigationVersion = 0;
+router.beforeEach(async (to) => {
+    const version = ++navigationVersion;
+    const isCurrent = () => version === navigationVersion;
     const auth = useAuthStore();
-    if (!to.meta.public && !auth.authenticated) return { name: "login" };
-    if (to.name === "login" && auth.authenticated) return { name: "dashboard" };
-    return true;
+    const catalog = useCatalogStore();
+    catalog.loadError = "";
+    catalog.clearIssuedApiKey();
+    try {
+        await auth.restore();
+        if (!isCurrent()) return false;
+        if (!to.meta.public && !auth.authenticated) {
+            catalog.$reset();
+            return { name: "login" };
+        }
+        if (to.name === "login" && auth.authenticated) return { name: "dashboard" };
+        if (to.meta.public) return true;
+        await csrf();
+        if (!isCurrent()) return false;
+        await catalog.fetchMasters(isCurrent);
+        if (!isCurrent()) return false;
+        if (to.name === "dashboard") await catalog.fetchDashboard(isCurrent);
+        if (to.name === "items") {
+            await catalog.fetchItems(
+                {
+                    keyword: String(to.query.keyword ?? ""),
+                    brand_id: to.query.brand_id ? Number(to.query.brand_id) : null,
+                    category_id: to.query.category_id ? Number(to.query.category_id) : null,
+                    status: (["inactive", "all"].includes(String(to.query.status)) ? String(to.query.status) : "active") as ItemSearchParams["status"],
+                    filter: String(to.query.filter ?? "") as ItemSearchParams["filter"],
+                    page: Number(to.query.page ?? 1) || 1,
+                },
+                isCurrent,
+            );
+        }
+        if (to.name === "item-detail" || to.name === "item-edit") {
+            try {
+                await catalog.fetchItem(Number(to.params.id), isCurrent);
+            } catch (error) {
+                if (!axios.isAxiosError(error) || error.response?.status !== 404) throw error;
+            }
+        }
+        if (to.name === "item-create") catalog.items = [];
+        if (to.name === "settings") await catalog.fetchApiSettings(isCurrent);
+    } catch (error) {
+        if (!isCurrent()) return false;
+        catalog.loadError = errorMessage(error);
+        useUiStore().notify(catalog.loadError, "error");
+    }
+    return isCurrent();
 });
 
 router.afterEach((to) => {

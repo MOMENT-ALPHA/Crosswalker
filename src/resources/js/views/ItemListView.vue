@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, watch } from "vue";
+import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import AppIcon from "@/componets/AppIcon.vue";
 import BaseBadge from "@/componets/ui/BaseBadge.vue";
@@ -11,6 +11,7 @@ import BasePagination from "@/componets/ui/BasePagination.vue";
 import BaseSelect from "@/componets/ui/BaseSelect.vue";
 import { useCatalogStore } from "@/stores/catalog";
 import { useUiStore } from "@/stores/ui";
+import { errorMessage } from "@/utils/http";
 import { searchCatalog } from "@/utils/catalogSearch";
 import { ITEMS_PER_PAGE } from "@/utils/consts";
 import { formatDateTime, toSelectOptions } from "@/utils/helper";
@@ -44,7 +45,8 @@ const applied = computed(() => ({
     page: Number(route.query.page ?? 1) || 1,
 }));
 
-const result = computed(() => catalog.search(applied.value));
+const result = computed(() => catalog.searchResult);
+const updating = ref(false);
 const skuMatchesByItem = computed(() => new Map(searchCatalog(result.value.rows, applied.value.keyword).map((match) => [match.item.id, match.matchedSkuIds])));
 const brandOptions = computed(() => toSelectOptions(catalog.brands));
 const categoryOptions = computed(() => toSelectOptions(catalog.categories));
@@ -69,7 +71,18 @@ watch(
     { immediate: true },
 );
 
-watch(form, () => applySearch(), { deep: true });
+let searchTimer: ReturnType<typeof window.setTimeout> | undefined;
+watch(
+    form,
+    () => {
+        window.clearTimeout(searchTimer);
+        const current = applied.value;
+        if (form.keyword === current.keyword && form.brand_id === current.brand_id && form.category_id === current.category_id && form.status === current.status) return;
+        searchTimer = window.setTimeout(() => applySearch(), 250);
+    },
+    { deep: true },
+);
+onBeforeUnmount(() => window.clearTimeout(searchTimer));
 
 function applySearch(page = 1) {
     router.replace({
@@ -86,16 +99,23 @@ function applySearch(page = 1) {
 }
 
 function clearSearch() {
-    form.keyword = "";
-    form.brand_id = null;
-    form.category_id = null;
-    form.status = "active";
+    window.clearTimeout(searchTimer);
     router.push({ name: "items" });
 }
 
-function toggleItemStatus(row: ItemListRow) {
-    const updated = catalog.setItemActive(row.id, !row.is_active);
-    if (updated) ui.notify("品番「" + updated.item_no + "」を" + (updated.is_active ? "有効" : "無効") + "にしました。");
+async function toggleItemStatus(row: ItemListRow) {
+    if (updating.value) return;
+    updating.value = true;
+    try {
+        const updated = await catalog.setItemActive(row.id, !row.is_active);
+        ui.notify("品番「" + updated.item_no + "」を" + (updated.is_active ? "有効" : "無効") + "にしました。");
+        const query = route.fullPath;
+        await catalog.fetchItems(applied.value, () => route.fullPath === query);
+    } catch (error) {
+        ui.notify(errorMessage(error), "error");
+    } finally {
+        updating.value = false;
+    }
 }
 
 function removeQuickFilter() {

@@ -12,6 +12,7 @@ import BaseSelect from "@/componets/ui/BaseSelect.vue";
 import BaseToggle from "@/componets/ui/BaseToggle.vue";
 import { useCatalogStore } from "@/stores/catalog";
 import { useUiStore } from "@/stores/ui";
+import { apiErrors, errorMessage } from "@/utils/http";
 import { createEmptySkuRow, toSelectOptions, uid } from "@/utils/helper";
 import type { ItemFormValues, ValidationResult } from "@/types";
 
@@ -24,9 +25,10 @@ const ui = useUiStore();
 const editingId = computed(() => (route.name === "item-edit" ? Number(route.params.id) : null));
 const mode = computed<"create" | "edit">(() => (editingId.value !== null ? "edit" : "create"));
 
-const form = reactive<ItemFormValues>({ item_no: "", brand_id: null, category_id: null, parent_asin: "", memo: "", is_active: true, skus: [createEmptySkuRow()] });
+const form = reactive<ItemFormValues>({ item_no: "", brand_id: null, category_id: null, parent_asin: "", is_active: true, skus: [createEmptySkuRow()] });
 const errors = ref<ValidationResult>({ item: {}, skus: {}, global: [] });
 const saving = ref(false);
+const busy = ref(false);
 const initialSnapshot = ref("");
 const skipGuard = ref(false);
 
@@ -51,7 +53,6 @@ onMounted(() => {
             form.brand_id = item.brand_id;
             form.category_id = item.category_id;
             form.parent_asin = item.parent_asin;
-            form.memo = item.memo;
             form.is_active = item.is_active;
             form.skus = item.skus.map((sku) => ({
                 key: uid("sku"),
@@ -61,7 +62,6 @@ onMounted(() => {
                 tq_item_no: sku.tq_item_no,
                 tq_color_no: sku.tq_color_no,
                 tq_size: sku.tq_size,
-                memo: sku.memo,
                 is_active: sku.is_active,
             }));
         }
@@ -115,28 +115,35 @@ function openMasterModal(kind: "brand" | "category") {
 }
 
 /** 追加したブランド・カテゴリはそのまま選択状態にする（§4.5） */
-function submitMasterModal() {
-    if (masterModal.kind === "brand") {
-        const result = catalog.addBrand(masterModal.name);
-        if (!result.ok || !result.brand) {
-            masterModal.error = result.message ?? "";
-            return;
+async function submitMasterModal() {
+    if (busy.value) return;
+    busy.value = true;
+    try {
+        if (masterModal.kind === "brand") {
+            const result = await catalog.addBrand(masterModal.name);
+            if (!result.ok || !result.brand) {
+                masterModal.error = result.message ?? "";
+                return;
+            }
+            form.brand_id = result.brand.id;
+            ui.notify(`ブランド「${result.brand.name}」を追加しました。`);
+        } else {
+            const result = await catalog.addCategory(masterModal.name);
+            if (!result.ok || !result.category) {
+                masterModal.error = result.message ?? "";
+                return;
+            }
+            form.category_id = result.category.id;
+            ui.notify(`カテゴリ「${result.category.name}」を追加しました。`);
         }
-        form.brand_id = result.brand.id;
-        ui.notify(`ブランド「${result.brand.name}」を追加しました。`);
-    } else {
-        const result = catalog.addCategory(masterModal.name);
-        if (!result.ok || !result.category) {
-            masterModal.error = result.message ?? "";
-            return;
-        }
-        form.category_id = result.category.id;
-        ui.notify(`カテゴリ「${result.category.name}」を追加しました。`);
+        masterModal.open = false;
+    } finally {
+        busy.value = false;
     }
-    masterModal.open = false;
 }
 
-function save() {
+async function save() {
+    if (saving.value) return;
     errors.value = catalog.validateItemForm(form, editingId.value);
     const hasError = Object.keys(errors.value.item).length > 0 || Object.keys(errors.value.skus).length > 0 || errors.value.global.length > 0;
     if (hasError) {
@@ -146,11 +153,27 @@ function save() {
     }
 
     saving.value = true;
-    const saved = catalog.saveItem(form, editingId.value);
-    skipGuard.value = true;
-    saving.value = false;
-    ui.notify(`品番「${saved.item_no}」を${mode.value === "edit" ? "更新" : "登録"}しました。`);
-    router.push({ name: "item-detail", params: { id: saved.id } });
+    try {
+        const saved = await catalog.saveItem(form, editingId.value);
+        skipGuard.value = true;
+        ui.notify(`品番「${saved.item_no}」を${mode.value === "edit" ? "更新" : "登録"}しました。`);
+        await router.push({ name: "item-detail", params: { id: saved.id } });
+    } catch (error) {
+        errors.value = { item: {}, skus: {}, global: [] };
+        for (const [field, messages] of Object.entries(apiErrors(error))) {
+            const match = /^skus\.(\d+)\.(.+)$/.exec(field);
+            if (match) {
+                const row = form.skus[Number(match[1])];
+                if (row) errors.value.skus[row.key] = { ...errors.value.skus[row.key], [match[2]!]: messages[0] };
+            } else if (field in form && field !== "skus") {
+                errors.value.item = { ...errors.value.item, [field]: messages[0] };
+            } else errors.value.global.push(messages[0] ?? "入力内容を確認してください。");
+        }
+        if (Object.keys(apiErrors(error)).length === 0) errors.value.global.push(errorMessage(error));
+        ui.notify(errorMessage(error), "error");
+    } finally {
+        saving.value = false;
+    }
 }
 
 function cancel() {
@@ -158,16 +181,22 @@ function cancel() {
     else router.push({ name: "items" });
 }
 
-function confirmDelete() {
-    if (editingId.value === null) return;
+async function confirmDelete() {
+    if (editingId.value === null || saving.value) return;
     const item = catalog.findItem(editingId.value);
     if (!item) return;
-
-    catalog.deleteItem(item.id);
-    skipGuard.value = true;
-    deleteOpen.value = false;
-    ui.notify(`品番「${item.item_no}」と所属SKU${item.skus.length}件を削除しました。`);
-    router.push({ name: "items" });
+    saving.value = true;
+    try {
+        await catalog.deleteItem(item.id);
+        skipGuard.value = true;
+        deleteOpen.value = false;
+        ui.notify(`品番「${item.item_no}」と所属SKU${item.skus.length}件を削除しました。`);
+        await router.push({ name: "items" });
+    } catch (error) {
+        ui.notify(errorMessage(error), "error");
+    } finally {
+        saving.value = false;
+    }
 }
 </script>
 
@@ -290,7 +319,7 @@ function confirmDelete() {
             <BaseInput v-model="masterModal.name" :label="masterModal.kind === 'brand' ? 'ブランド名称' : 'カテゴリ名称'" required :error="masterModal.error" @keyup.enter="submitMasterModal" />
             <template #footer>
                 <BaseButton variant="secondary" @click="masterModal.open = false">キャンセル</BaseButton>
-                <BaseButton variant="primary" icon="add" @click="submitMasterModal">追加</BaseButton>
+                <BaseButton variant="primary" icon="add" :loading="busy" @click="submitMasterModal">追加</BaseButton>
             </template>
         </BaseModal>
 

@@ -1,63 +1,88 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 import { useCatalogStore } from "@/stores/catalog";
-import { CSV_HEADERS } from "@/utils/consts";
-import { toCsvLine } from "@/utils/helper";
+import { http } from "@/utils/http";
+import { createSeedItems } from "@/mock/data";
+import type { CsvValidationSummary, ItemFormValues } from "@/types";
 
-function csvRow(overrides: Record<string, string> = {}): string {
-    const values: Record<string, string> = {
-        item_no: "fisi-05",
-        category_name: "老眼鏡",
-        brand_name: "栞",
-        parent_asin: "B09T32PVM5",
-        item_status: "",
-        sku_code: "fisi-05-1-10",
-        child_asin: "B09EXAMPLE1",
-        sku_status: "",
-        tq_item_no: "FISI05",
-        tq_color_no: "1",
-        tq_size: "10",
-        ...overrides,
-    };
-    return toCsvLine(CSV_HEADERS.map((header) => values[header] ?? ""));
-}
+vi.mock("@/utils/http", () => ({ http: { get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(), request: vi.fn() }, errorMessage: () => "保存できませんでした。" }));
 
-describe("catalog status management", () => {
-    beforeEach(() => setActivePinia(createPinia()));
-
-    it("品番状態とSKU状態を個別に保持し、有効データだけを集計する", () => {
-        const catalog = useCatalogStore();
-        const item = catalog.items[0]!;
-        const initialItemCount = catalog.stats.itemCount;
-        const initialSkuCount = catalog.stats.skuCount;
-        catalog.setSkuActive(item.id, item.skus[0]!.id, false);
-        expect(catalog.stats.skuCount).toBe(initialSkuCount - 1);
-        catalog.setItemActive(item.id, false);
-        expect(catalog.stats.itemCount).toBe(initialItemCount - 1);
-        expect(catalog.search({ keyword: "", brand_id: null, category_id: null, status: "active", filter: "", page: 1 }).rows).not.toContainEqual(expect.objectContaining({ id: item.id }));
-        expect(catalog.search({ keyword: "", brand_id: null, category_id: null, status: "inactive", filter: "", page: 1 }).rows).toContainEqual(expect.objectContaining({ id: item.id }));
-        catalog.setItemActive(item.id, true);
-        expect(item.skus[0]!.is_active).toBe(false);
+describe("catalog API integration", () => {
+    beforeEach(() => {
+        setActivePinia(createPinia());
+        vi.resetAllMocks();
     });
 
-    it("CSVから品番状態とSKU状態を更新する", () => {
+    it("品番状態とSKU状態をサーバーの保存結果で更新する", async () => {
         const catalog = useCatalogStore();
-        const csv = [toCsvLine([...CSV_HEADERS]), csvRow({ item_status: "inactive", sku_status: "inactive" })].join("\n");
-        const summary = catalog.validateCsv("status.csv", csv);
-        expect(summary.error_count).toBe(0);
-        expect(summary.statuses[2]).toBe("update");
-        catalog.commitCsv(summary);
-        expect(catalog.items[0]!.is_active).toBe(false);
-        expect(catalog.items[0]!.skus[0]!.is_active).toBe(false);
+        const item = createSeedItems()[0]!;
+        catalog.items = [item];
+        const updated = { ...item, is_active: false, skus: item.skus.map((sku, index) => ({ ...sku, is_active: index !== 0 })) };
+        vi.mocked(http.patch).mockResolvedValue({ data: { data: updated } });
+        await catalog.setItemActive(item.id, false);
+        expect(http.patch).toHaveBeenCalledWith(`/items/${item.id}/status`, { is_active: false });
+        expect(catalog.items[0]?.is_active).toBe(false);
+        expect(catalog.items[0]?.skus[0]?.is_active).toBe(false);
     });
 
-    it("同一品番の品番状態が矛盾するCSVを拒否する", () => {
+    it("保存に失敗した場合は表示中の状態を変更しない", async () => {
         const catalog = useCatalogStore();
-        const csv = [toCsvLine([...CSV_HEADERS]), csvRow({ item_status: "active" }), csvRow({ item_status: "inactive", sku_code: "fisi-05-1-15", child_asin: "B09EXAMPLE2", tq_size: "15" })].join(
-            "\n",
-        );
-        const summary = catalog.validateCsv("conflict.csv", csv);
-        expect(summary.error_count).toBeGreaterThan(0);
-        expect(summary.errors).toContainEqual(expect.objectContaining({ column: "item_status" }));
+        catalog.items = [createSeedItems()[0]!];
+        vi.mocked(http.patch).mockRejectedValue(new Error("network"));
+        await expect(catalog.setItemActive(1, false)).rejects.toThrow("network");
+        expect(catalog.items[0]?.is_active).toBe(true);
+    });
+
+    it("商品保存時に画面内のキーや削除済みメモを送信しない", async () => {
+        const catalog = useCatalogStore();
+        const item = createSeedItems()[0]!;
+        const values: ItemFormValues = { ...item, skus: item.skus.map((sku) => ({ ...sku, key: `row-${sku.id}` })) };
+        vi.mocked(http.post).mockResolvedValue({ data: { data: item } });
+        await catalog.saveItem(values, null);
+        const payload = vi.mocked(http.post).mock.calls[0]?.[1] as { skus: Record<string, unknown>[] };
+        expect(payload.skus[0]).not.toHaveProperty("key");
+        expect(payload.skus[0]).not.toHaveProperty("memo");
+        expect(payload.skus[0]).not.toHaveProperty("item_id");
+    });
+
+    it("CSVはファイルとして検証し、取込時は検証IDだけを送信する", async () => {
+        const catalog = useCatalogStore();
+        const file = new File(["item_no,sku_code"], "status.csv", { type: "text/csv" });
+        const summary = { validation_id: "server-token", error_count: 0, rows: [] } as unknown as CsvValidationSummary;
+        vi.mocked(http.post)
+            .mockResolvedValueOnce({ data: summary })
+            .mockResolvedValueOnce({ data: { created_items: 1 } });
+        expect(await catalog.validateCsv(file)).toEqual(summary);
+        const upload = vi.mocked(http.post).mock.calls[0]?.[1] as FormData;
+        expect(upload.get("file")).toBe(file);
+        await catalog.commitCsv(summary);
+        expect(http.post).toHaveBeenLastCalledWith("/csv/import", { validation_id: "server-token" });
+    });
+
+    it("CSVの矛盾はサーバーの行番号と項目を保持して画面に返す", async () => {
+        const catalog = useCatalogStore();
+        const summary = { error_count: 1, errors: [{ line: 3, column: "item_status", message: "同一品番の状態が矛盾しています。" }] };
+        vi.mocked(http.post).mockResolvedValue({ data: summary });
+        const result = await catalog.validateCsv(new File(["conflict"], "conflict.csv"));
+        expect(result.errors).toEqual(summary.errors);
+        expect(result.error_count).toBe(1);
+    });
+
+    it("マスタ削除が拒否された場合は一覧を保持して理由を返す", async () => {
+        const catalog = useCatalogStore();
+        catalog.brands = [{ id: 1, name: "栞" }];
+        vi.mocked(http.request).mockRejectedValue(new Error("used"));
+        expect(await catalog.deleteBrand(1)).toEqual({ ok: false, message: "保存できませんでした。" });
+        expect(catalog.brands).toHaveLength(1);
+    });
+
+    it("画面遷移で不要になった検索結果は表示を上書きしない", async () => {
+        const catalog = useCatalogStore();
+        const current = createSeedItems()[0]!;
+        catalog.items = [current];
+        vi.mocked(http.get).mockResolvedValue({ data: { data: [], meta: { total: 0, last_page: 1, current_page: 1 } } });
+        await catalog.fetchItems({ keyword: "old", brand_id: null, category_id: null, status: "active", filter: "", page: 1 }, () => false);
+        expect(catalog.items).toEqual([current]);
+        expect(catalog.lastSearch.keyword).toBe("");
     });
 });

@@ -1,9 +1,16 @@
 <script setup lang="ts">
+import { useCatalogStore } from "@/stores/catalog";
+import BaseAlert from "@/componets/ui/BaseAlert.vue";
+import BaseButton from "@/componets/ui/BaseButton.vue";
 import { RouterView } from "vue-router";
 import AppHeader from "@/componets/AppHeader.vue";
 import AppSidebar from "@/componets/AppSidebar.vue";
 import { useUiStore } from "@/stores/ui";
 
+const catalog = useCatalogStore();
+function reload() {
+    window.location.reload();
+}
 const ui = useUiStore();
 </script>
 
@@ -21,7 +28,12 @@ const ui = useUiStore();
         <div class="flex min-w-0 flex-1 flex-col">
             <AppHeader />
             <main class="flex-1 px-4 py-6 lg:px-8 lg:py-8">
-                <div class="mx-auto w-full max-w-[1400px]"><RouterView /></div>
+                <div class="mx-auto w-full max-w-[1400px]"
+                    ><div v-if="catalog.loadError"
+                        ><BaseAlert tone="danger">{{ catalog.loadError }}</BaseAlert
+                        ><BaseButton class="mt-4" @click="reload">再読み込み</BaseButton></div
+                    ><RouterView v-else :key="$route.path"
+                /></div>
             </main>
         </div>
     </div>

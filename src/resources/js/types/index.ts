@@ -5,11 +5,13 @@
  */
 
 export interface Brand {
+    items_count?: number;
     id: number;
     name: string;
 }
 
 export interface Category {
+    items_count?: number;
     id: number;
     name: string;
 }
@@ -22,7 +24,6 @@ export interface Sku {
     tq_item_no: string;
     tq_color_no: string;
     tq_size: string;
-    memo: string;
     is_active: boolean;
     sort_order: number;
     created_at: string;
@@ -35,7 +36,6 @@ export interface Item {
     brand_id: number | null;
     category_id: number | null;
     parent_asin: string;
-    memo: string;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -59,7 +59,6 @@ export interface SkuFormRow {
     tq_item_no: string;
     tq_color_no: string;
     tq_size: string;
-    memo: string;
     is_active: boolean;
 }
 
@@ -69,7 +68,6 @@ export interface ItemFormValues {
     brand_id: number | null;
     category_id: number | null;
     parent_asin: string;
-    memo: string;
     is_active: boolean;
     skus: SkuFormRow[];
 }
@@ -108,6 +106,7 @@ export interface CsvRowError {
 }
 
 export interface CsvValidationSummary {
+    validation_id: string;
     file_name: string;
     total_rows: number;
     create_count: number;

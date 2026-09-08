@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, reactive, ref } from "vue";
 import AppIcon from "@/componets/AppIcon.vue";
 import BaseAlert from "@/componets/ui/BaseAlert.vue";
 import BaseBadge from "@/componets/ui/BaseBadge.vue";
@@ -10,10 +10,13 @@ import BaseModal from "@/componets/ui/BaseModal.vue";
 import BaseToggle from "@/componets/ui/BaseToggle.vue";
 import { useCatalogStore } from "@/stores/catalog";
 import { useUiStore } from "@/stores/ui";
+import { errorMessage } from "@/utils/http";
 import { displayValue, formatDateTime } from "@/utils/helper";
 
 const catalog = useCatalogStore();
 const ui = useUiStore();
+const busy = ref(false);
+onBeforeUnmount(() => catalog.clearIssuedApiKey());
 
 type TabKey = "brand" | "category" | "api";
 
@@ -31,21 +34,33 @@ const categoryForm = reactive({ name: "", error: "" });
 const editModal = reactive({ open: false, kind: "brand" as "brand" | "category", id: 0, name: "", error: "" });
 const deleteModal = reactive({ open: false, kind: "brand" as "brand" | "category", id: 0, name: "", blockedMessage: "" });
 
-function addBrand() {
-    const result = catalog.addBrand(brandForm.name);
-    brandForm.error = result.ok ? "" : (result.message ?? "");
-    if (result.ok) {
-        ui.notify(`ブランド「${result.brand?.name}」を登録しました。`);
-        brandForm.name = "";
+async function addBrand() {
+    if (busy.value) return;
+    busy.value = true;
+    try {
+        const result = await catalog.addBrand(brandForm.name);
+        brandForm.error = result.ok ? "" : (result.message ?? "");
+        if (result.ok) {
+            ui.notify(`ブランド「${result.brand?.name}」を登録しました。`);
+            brandForm.name = "";
+        }
+    } finally {
+        busy.value = false;
     }
 }
 
-function addCategory() {
-    const result = catalog.addCategory(categoryForm.name);
-    categoryForm.error = result.ok ? "" : (result.message ?? "");
-    if (result.ok) {
-        ui.notify(`カテゴリ「${result.category?.name}」を登録しました。`);
-        categoryForm.name = "";
+async function addCategory() {
+    if (busy.value) return;
+    busy.value = true;
+    try {
+        const result = await catalog.addCategory(categoryForm.name);
+        categoryForm.error = result.ok ? "" : (result.message ?? "");
+        if (result.ok) {
+            ui.notify(`カテゴリ「${result.category?.name}」を登録しました。`);
+            categoryForm.name = "";
+        }
+    } finally {
+        busy.value = false;
     }
 }
 
@@ -53,14 +68,20 @@ function openEdit(kind: "brand" | "category", id: number, name: string) {
     Object.assign(editModal, { open: true, kind, id, name, error: "" });
 }
 
-function submitEdit() {
-    const result = editModal.kind === "brand" ? catalog.updateBrand(editModal.id, editModal.name) : catalog.updateCategory(editModal.id, editModal.name);
-    if (!result.ok) {
-        editModal.error = result.message ?? "";
-        return;
+async function submitEdit() {
+    if (busy.value) return;
+    busy.value = true;
+    try {
+        const result = editModal.kind === "brand" ? await catalog.updateBrand(editModal.id, editModal.name) : await catalog.updateCategory(editModal.id, editModal.name);
+        if (!result.ok) {
+            editModal.error = result.message ?? "";
+            return;
+        }
+        editModal.open = false;
+        ui.notify(`${editModal.kind === "brand" ? "ブランド" : "カテゴリ"}名称を更新しました。`);
+    } finally {
+        busy.value = false;
     }
-    editModal.open = false;
-    ui.notify(`${editModal.kind === "brand" ? "ブランド" : "カテゴリ"}名称を更新しました。`);
 }
 
 /** 使用中のブランド・カテゴリは削除を中止し、対象品番が存在することを表示する（§4.7） */
@@ -75,14 +96,20 @@ function openDelete(kind: "brand" | "category", id: number, name: string) {
     });
 }
 
-function submitDelete() {
-    const result = deleteModal.kind === "brand" ? catalog.deleteBrand(deleteModal.id) : catalog.deleteCategory(deleteModal.id);
-    if (!result.ok) {
-        deleteModal.blockedMessage = result.message ?? "";
-        return;
+async function submitDelete() {
+    if (busy.value) return;
+    busy.value = true;
+    try {
+        const result = deleteModal.kind === "brand" ? await catalog.deleteBrand(deleteModal.id) : await catalog.deleteCategory(deleteModal.id);
+        if (!result.ok) {
+            deleteModal.blockedMessage = result.message ?? "";
+            return;
+        }
+        deleteModal.open = false;
+        ui.notify(`「${deleteModal.name}」を削除しました。`);
+    } finally {
+        busy.value = false;
     }
-    deleteModal.open = false;
-    ui.notify(`「${deleteModal.name}」を削除しました。`);
 }
 
 /* --------------------------------------------------------------------- API接続設定 */
@@ -103,20 +130,38 @@ function addSource() {
     }
 }
 
-function issueKey() {
-    catalog.issueApiKey();
-    reissueOpen.value = false;
-    ui.notify("APIキーを発行しました。表示は今回のみです。");
+async function issueKey() {
+    if (busy.value) return;
+    busy.value = true;
+    try {
+        try {
+            await catalog.issueApiKey();
+            reissueOpen.value = false;
+            ui.notify("APIキーを発行しました。表示は今回のみです。");
+        } catch (error) {
+            apiError.value = errorMessage(error);
+            ui.notify(apiError.value, "error");
+        }
+    } finally {
+        busy.value = false;
+    }
 }
 
-function saveApiSettings() {
-    const message = catalog.validateApiSettings();
-    apiError.value = message ?? "";
-    if (message) {
-        ui.notify(message, "error");
-        return;
+async function saveApiSettings() {
+    if (busy.value) return;
+    busy.value = true;
+    try {
+        apiError.value = "";
+        try {
+            await catalog.saveApiSettings();
+            ui.notify("API接続設定を保存しました。");
+        } catch (error) {
+            apiError.value = errorMessage(error);
+            ui.notify(apiError.value, "error");
+        }
+    } finally {
+        busy.value = false;
     }
-    ui.notify("API接続設定を保存しました。");
 }
 
 async function copyKey() {
@@ -222,7 +267,7 @@ async function copyKey() {
                             <p class="mt-1 text-[11px] text-slate-500">発行日時: {{ formatDateTime(catalog.apiSettings.key_issued_at) }}</p>
                         </div>
                         <BaseButton v-if="hasKey" variant="secondary" icon="refresh" @click="reissueOpen = true">再発行</BaseButton>
-                        <BaseButton v-else variant="primary" icon="key" @click="issueKey">発行</BaseButton>
+                        <BaseButton v-else variant="primary" icon="key" :loading="busy" @click="issueKey">発行</BaseButton>
                     </div>
 
                     <div v-if="catalog.issuedApiKey" class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
@@ -260,7 +305,7 @@ async function copyKey() {
                 <p v-else class="px-5 py-6 text-center text-sm text-slate-500">許可IPアドレス / CIDRが登録されていません。</p>
 
                 <div class="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
-                    <BaseButton variant="primary" icon="check" @click="saveApiSettings">保存</BaseButton>
+                    <BaseButton variant="primary" icon="check" :loading="busy" @click="saveApiSettings">保存</BaseButton>
                 </div>
             </BaseCard>
         </div>
@@ -269,7 +314,7 @@ async function copyKey() {
             <BaseInput v-model="editModal.name" :label="editModal.kind === 'brand' ? 'ブランド名称' : 'カテゴリ名称'" required :error="editModal.error" @keyup.enter="submitEdit" />
             <template #footer>
                 <BaseButton variant="secondary" @click="editModal.open = false">キャンセル</BaseButton>
-                <BaseButton variant="primary" icon="check" @click="submitEdit">保存</BaseButton>
+                <BaseButton variant="primary" icon="check" :loading="busy" @click="submitEdit">保存</BaseButton>
             </template>
         </BaseModal>
 
@@ -284,7 +329,7 @@ async function copyKey() {
             </p>
             <template #footer>
                 <BaseButton variant="secondary" @click="deleteModal.open = false">{{ deleteModal.blockedMessage ? "閉じる" : "キャンセル" }}</BaseButton>
-                <BaseButton v-if="!deleteModal.blockedMessage" variant="danger" icon="delete" @click="submitDelete">削除する</BaseButton>
+                <BaseButton v-if="!deleteModal.blockedMessage" variant="danger" icon="delete" :loading="busy" @click="submitDelete">削除する</BaseButton>
             </template>
         </BaseModal>
 
@@ -292,7 +337,7 @@ async function copyKey() {
             <p class="text-sm text-slate-700">現在のAPIキーを使用している外部システムは接続できなくなります。新しいキーを配布してください。</p>
             <template #footer>
                 <BaseButton variant="secondary" @click="reissueOpen = false">キャンセル</BaseButton>
-                <BaseButton variant="danger" icon="refresh" @click="issueKey">再発行する</BaseButton>
+                <BaseButton variant="danger" icon="refresh" :loading="busy" @click="issueKey">再発行する</BaseButton>
             </template>
         </BaseModal>
     </div>

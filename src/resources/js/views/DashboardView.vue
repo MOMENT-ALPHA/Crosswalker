@@ -95,7 +95,5 @@ const toneClass: Record<string, string> = {
                 </table>
             </div>
         </BaseCard>
-
-        <p class="text-[11px] text-slate-400">表示中のデータはUI確認用のモックです（{{ formatNumber(catalog.items.length) }}件）。</p>
     </div>
 </template>

@@ -7,7 +7,7 @@ import BaseButton from "@/componets/ui/BaseButton.vue";
 import BaseInput from "@/componets/ui/BaseInput.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useUiStore } from "@/stores/ui";
-import { DEMO_LOGIN_ID, DEMO_PASSWORD } from "@/utils/consts";
+import { errorMessage as describeError } from "@/utils/http";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -27,18 +27,22 @@ async function submit() {
     errorMessage.value = "";
     if (fieldErrors.value.loginId || fieldErrors.value.password) return;
 
+    if (loading.value) return;
     loading.value = true;
-    const ok = await auth.login(loginId.value, password.value);
-    loading.value = false;
-
-    if (!ok) {
-        errorMessage.value = "ログイン情報が間違っています。";
-        password.value = "";
-        return;
+    try {
+        const ok = await auth.login(loginId.value, password.value);
+        if (!ok) {
+            errorMessage.value = "ログイン情報が間違っています。";
+            password.value = "";
+            return;
+        }
+        ui.notify("ログインしました。");
+        await router.push({ name: "dashboard" });
+    } catch (error) {
+        errorMessage.value = describeError(error);
+    } finally {
+        loading.value = false;
     }
-
-    ui.notify("ログインしました。");
-    router.push({ name: "dashboard" });
 }
 </script>
 

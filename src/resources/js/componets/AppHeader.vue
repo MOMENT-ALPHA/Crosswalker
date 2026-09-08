@@ -4,6 +4,8 @@ import { useRoute, useRouter } from "vue-router";
 import AppIcon from "@/componets/AppIcon.vue";
 import BaseButton from "@/componets/ui/BaseButton.vue";
 import { useAuthStore } from "@/stores/auth";
+import { useCatalogStore } from "@/stores/catalog";
+import { errorMessage } from "@/utils/http";
 import { useUiStore } from "@/stores/ui";
 
 const route = useRoute();
@@ -12,12 +14,16 @@ const auth = useAuthStore();
 const ui = useUiStore();
 
 const title = computed(() => String(route.meta.title ?? ""));
-const screenId = computed(() => String(route.meta.screenId ?? ""));
 
-function logout() {
-    auth.logout();
-    ui.notify("ログアウトしました。", "info");
-    router.push({ name: "login" });
+async function logout() {
+    try {
+        await auth.logout();
+        useCatalogStore().$reset();
+        ui.notify("ログアウトしました。", "info");
+        await router.push({ name: "login" });
+    } catch (error) {
+        ui.notify(errorMessage(error), "error");
+    }
 }
 </script>
 

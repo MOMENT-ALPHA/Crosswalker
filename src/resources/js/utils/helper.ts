@@ -43,14 +43,13 @@ export function createEmptySkuRow(): SkuFormRow {
         tq_item_no: "",
         tq_color_no: "",
         tq_size: "",
-        memo: "",
         is_active: true,
     };
 }
 
 /** SKU入力行が未入力かどうか */
 export function isEmptySkuRow(row: SkuFormRow): boolean {
-    return [row.sku_code, row.child_asin, row.tq_item_no, row.tq_color_no, row.tq_size, row.memo].every((value) => trimValue(value) === "");
+    return [row.sku_code, row.child_asin, row.tq_item_no, row.tq_color_no, row.tq_size].every((value) => trimValue(value) === "");
 }
 
 /** id/name の配列をセレクト用の選択肢に変換する */

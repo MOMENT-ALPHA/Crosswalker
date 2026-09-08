@@ -33,7 +33,3 @@ export const CSV_TEMPLATE_SAMPLE = ["fisi-05", "老眼鏡", "栞", "B09T32PVM5",
 
 /** アップロード可能なCSVの最大サイズ（表示用） */
 export const CSV_MAX_SIZE_MB = 5;
-
-/** モック認証で受け付けるログインID / パスワード */
-export const DEMO_LOGIN_ID = "admin";
-export const DEMO_PASSWORD = "password";
