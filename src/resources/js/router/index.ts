@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory, type RouteLocationNormalized } from "vue-router";
 import AppLayout from "@/layouts/AppLayout.vue";
 import LoginView from "@/views/LoginView.vue";
 import axios from "axios";
@@ -71,7 +71,10 @@ const router = createRouter({
 });
 
 let navigationVersion = 0;
+let loadingRoute: RouteLocationNormalized | undefined;
 router.beforeEach(async (to) => {
+    loadingRoute = to;
+    useUiStore().navigating = true;
     const version = ++navigationVersion;
     const isCurrent = () => version === navigationVersion;
     const auth = useAuthStore();
@@ -120,7 +123,17 @@ router.beforeEach(async (to) => {
     return isCurrent();
 });
 
+function finishNavigation(to: RouteLocationNormalized) {
+    // 中断された古い遷移の完了で、次の遷移のローディングを消さない。
+    if (loadingRoute !== to) return;
+    loadingRoute = undefined;
+    useUiStore().navigating = false;
+}
+
+router.onError((_error, to) => finishNavigation(to));
+
 router.afterEach((to) => {
+    finishNavigation(to);
     document.title = `${String(to.meta.title ?? "")} | Crosswalker`;
 });
 

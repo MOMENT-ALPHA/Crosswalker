@@ -6,6 +6,7 @@ export const useUiStore = defineStore("ui", {
     state: () => ({
         toasts: [] as Toast[],
         sidebarOpen: false,
+        navigating: false,
         nextToastId: 1,
     }),
     actions: {

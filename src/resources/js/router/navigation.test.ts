@@ -3,6 +3,10 @@ import { createPinia, setActivePinia } from "pinia";
 import { http, resetCsrf } from "@/utils/http";
 import { useAuthStore } from "@/stores/auth";
 import { useCatalogStore } from "@/stores/catalog";
+import { mount } from "@vue/test-utils";
+import { nextTick } from "vue";
+import App from "@/App.vue";
+import { useUiStore } from "@/stores/ui";
 import router from "@/router";
 
 beforeEach(() => {
@@ -41,4 +45,75 @@ it("画面遷移で共通APIを再取得せず、設定画面ではマスタを�
     expect(count("/me")).toBe(2);
     expect(count("/csrf")).toBe(2);
     expect(count("/masters/brands")).toBe(3);
+});
+
+function prepareNavigation() {
+    useAuthStore().$patch({ initialized: true, authenticated: true });
+    useCatalogStore().mastersLoaded = true;
+    http.defaults.headers.common["X-CSRF-TOKEN"] = "token";
+}
+
+function deferred() {
+    let resolve!: () => void;
+    let reject!: (error: Error) => void;
+    const promise = new Promise<void>((done, fail) => {
+        resolve = done;
+        reject = fail;
+    });
+    return { promise, resolve, reject };
+}
+
+it("データ取得中はローディングを表示して操作を止め、完了後に解除する", async () => {
+    prepareNavigation();
+    const pending = deferred();
+    const fetch = vi.spyOn(useCatalogStore(), "fetchItems").mockReturnValue(pending.promise);
+    const wrapper = mount(App, { global: { stubs: { RouterView: true, BaseToasts: true, AppIcon: true } } });
+    expect(wrapper.find('[role="status"]').exists()).toBe(false);
+    const navigation = router.push("/items?keyword=loading");
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalled());
+    await nextTick();
+    expect(wrapper.get('[role="status"]').text()).toBe("読み込み中...");
+    expect(wrapper.find("[inert]").exists()).toBe(true);
+    pending.resolve();
+    await navigation;
+    await nextTick();
+    expect(wrapper.find('[role="status"]').exists()).toBe(false);
+    expect(wrapper.find("[inert]").exists()).toBe(false);
+    wrapper.unmount();
+});
+
+it("APIエラーでもローディングが残らない", async () => {
+    prepareNavigation();
+    vi.spyOn(useCatalogStore(), "fetchItems").mockRejectedValue(new Error("network"));
+    await router.push("/items?keyword=failed");
+    expect(useUiStore().navigating).toBe(false);
+    expect(useCatalogStore().loadError).not.toBe("");
+});
+
+it("古い遷移が中断されても、新しい遷移の完了まで表示を維持する", async () => {
+    prepareNavigation();
+    const first = deferred();
+    const second = deferred();
+    const fetch = vi.spyOn(useCatalogStore(), "fetchItems").mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+    const oldNavigation = router.push("/items?keyword=old");
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    const newNavigation = router.push("/items?keyword=new");
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    first.resolve();
+    await oldNavigation;
+    expect(useUiStore().navigating).toBe(true);
+    second.resolve();
+    await newNavigation;
+    expect(useUiStore().navigating).toBe(false);
+});
+
+it("ルートの読み込み自体に失敗した場合も表示を解除する", async () => {
+    prepareNavigation();
+    const removeRoute = router.addRoute({ path: "/loading-error", component: () => Promise.reject(new Error("chunk failed")) });
+    try {
+        await expect(router.push("/loading-error")).rejects.toThrow("chunk failed");
+        expect(useUiStore().navigating).toBe(false);
+    } finally {
+        removeRoute();
+    }
 });
