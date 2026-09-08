@@ -16,8 +16,14 @@ interface MasterResult {
     category?: Category;
 }
 
+function requestMasters() {
+    return Promise.all([http.get<{ data: Brand[] }>("/masters/brands"), http.get<{ data: Category[] }>("/masters/categories")]);
+}
+const masterRequests = new WeakMap<object, ReturnType<typeof requestMasters>>();
+
 export const useCatalogStore = defineStore("catalog", {
     state: () => ({
+        mastersLoaded: false,
         brands: [] as Brand[],
         categories: [] as Category[],
         items: [] as Item[],
@@ -44,11 +50,18 @@ export const useCatalogStore = defineStore("catalog", {
         findItem(id: number): Item | undefined {
             return this.items.find((item) => item.id === id);
         },
-        async fetchMasters(isCurrent: () => boolean = () => true): Promise<void> {
-            const [brands, categories] = await Promise.all([http.get<{ data: Brand[] }>("/masters/brands"), http.get<{ data: Category[] }>("/masters/categories")]);
+        async fetchMasters(isCurrent: () => boolean = () => true, force = false): Promise<void> {
+            if (this.mastersLoaded && !force) return;
+            let pending = masterRequests.get(this);
+            if (!pending) {
+                pending = requestMasters().finally(() => masterRequests.delete(this));
+                masterRequests.set(this, pending);
+            }
+            const [brands, categories] = await pending;
             if (!isCurrent()) return;
             this.brands = brands.data.data;
             this.categories = categories.data.data;
+            this.mastersLoaded = true;
         },
         async fetchItems(params: ItemSearchParams, isCurrent: () => boolean = () => true): Promise<void> {
             const { data } = await http.get<{ data: ItemListRow[]; meta: { total: number; last_page: number; current_page: number } }>("/items", { params });

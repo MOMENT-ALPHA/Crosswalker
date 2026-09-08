@@ -13,6 +13,31 @@ describe("catalog API integration", () => {
         vi.resetAllMocks();
     });
 
+    it("マスタの同時取得を共有し、変更結果をキャッシュに反映する", async () => {
+        const catalog = useCatalogStore();
+        vi.mocked(http.get).mockResolvedValue({ data: { data: [] } });
+        await Promise.all([catalog.fetchMasters(() => false), catalog.fetchMasters()]);
+        expect(http.get).toHaveBeenCalledTimes(2);
+        vi.mocked(http.request).mockResolvedValue({ data: { data: { id: 1, name: "新ブランド", items_count: 0 } } });
+        expect((await catalog.addBrand("新ブランド")).ok).toBe(true);
+        await catalog.fetchMasters();
+        expect(http.get).toHaveBeenCalledTimes(2);
+        expect(catalog.brandName(1)).toBe("新ブランド");
+    });
+
+    it("マスタ取得失敗後は再試行し、明示的な更新で使用件数も更新する", async () => {
+        const catalog = useCatalogStore();
+        vi.mocked(http.get).mockRejectedValue(new Error("network"));
+        await expect(catalog.fetchMasters()).rejects.toThrow("network");
+        expect(catalog.mastersLoaded).toBe(false);
+        vi.mocked(http.get).mockResolvedValue({ data: { data: [{ id: 1, name: "マスタ", items_count: 0 }] } });
+        await catalog.fetchMasters();
+        vi.mocked(http.get).mockResolvedValue({ data: { data: [{ id: 1, name: "マスタ", items_count: 2 }] } });
+        await catalog.fetchMasters(() => true, true);
+        expect(catalog.brandUsageCount(1)).toBe(2);
+        expect(catalog.categoryUsageCount(1)).toBe(2);
+    });
+
     it("品番状態とSKU状態をサーバーの保存結果で更新する", async () => {
         const catalog = useCatalogStore();
         const item = createSeedItems()[0]!;

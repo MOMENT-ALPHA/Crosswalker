@@ -87,9 +87,7 @@ router.beforeEach(async (to) => {
         }
         if (to.name === "login" && auth.authenticated) return { name: "dashboard" };
         if (to.meta.public) return true;
-        await csrf();
-        if (!isCurrent()) return false;
-        await catalog.fetchMasters(isCurrent);
+        await Promise.all([csrf(), catalog.fetchMasters(isCurrent, to.name === "settings")]);
         if (!isCurrent()) return false;
         if (to.name === "dashboard") await catalog.fetchDashboard(isCurrent);
         if (to.name === "items") {
