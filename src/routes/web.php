@@ -15,6 +15,7 @@ Route::prefix('api/admin')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('dashboard', DashboardController::class);
+        Route::get('items/export', [ItemController::class, 'export']);
         Route::apiResource('items', ItemController::class);
         Route::patch('items/{item}/status', [ItemController::class, 'status']);
         Route::patch('items/{item}/skus/{sku}/status', [ItemController::class, 'skuStatus']);

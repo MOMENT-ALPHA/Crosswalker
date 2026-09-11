@@ -94,7 +94,7 @@ class CatalogService
                 if ($field === 'child_asin' && $values[0] === null) {
                     continue;
                 }
-                $key = json_encode(array_map(fn ($value) => mb_strtolower($value), $values));
+                $key = json_encode(array_map(fn ($value) => mb_strtolower((string) ($value ?? '')), $values));
                 $existing = Sku::whereNotIn('id', $ownedIds);
                 foreach ($columns as $i => $column) {
                     $existing->where($column, $values[$i]);

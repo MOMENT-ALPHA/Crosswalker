@@ -269,7 +269,7 @@ async function confirmDelete() {
                             <th class="px-3 py-2.5 font-medium">子ASIN</th>
                             <th class="px-3 py-2.5 font-medium">TQ品番<span class="ml-1 text-rose-500">*</span></th>
                             <th class="px-3 py-2.5 font-medium">TQカラーNo<span class="ml-1 text-rose-500">*</span></th>
-                            <th class="px-3 py-2.5 font-medium">TQサイズ<span class="ml-1 text-rose-500">*</span></th>
+                            <th class="px-3 py-2.5 font-medium">TQサイズ</th>
                             <th class="w-12 px-3 py-2.5"></th>
                         </tr>
                     </thead>

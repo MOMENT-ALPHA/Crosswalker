@@ -65,6 +65,7 @@ function deferred() {
 
 it("データ取得中はローディングを表示して操作を止め、完了後に解除する", async () => {
     prepareNavigation();
+    await router.push("/csv-import");
     const pending = deferred();
     const fetch = vi.spyOn(useCatalogStore(), "fetchItems").mockReturnValue(pending.promise);
     const wrapper = mount(App, { global: { stubs: { RouterView: true, BaseToasts: true, AppIcon: true } } });
@@ -84,27 +85,34 @@ it("データ取得中はローディングを表示して操作を止め、完�
 
 it("APIエラーでもローディングが残らない", async () => {
     prepareNavigation();
+    await router.push("/csv-import");
     vi.spyOn(useCatalogStore(), "fetchItems").mockRejectedValue(new Error("network"));
     await router.push("/items?keyword=failed");
     expect(useUiStore().navigating).toBe(false);
     expect(useCatalogStore().loadError).not.toBe("");
 });
 
-it("古い遷移が中断されても、新しい遷移の完了まで表示を維持する", async () => {
+it("品番一覧の検索条件更新中はローディングを表示して操作を止める", async () => {
     prepareNavigation();
-    const first = deferred();
-    const second = deferred();
-    const fetch = vi.spyOn(useCatalogStore(), "fetchItems").mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
-    const oldNavigation = router.push("/items?keyword=old");
+    await router.push("/csv-import");
+    const fetch = vi.spyOn(useCatalogStore(), "fetchItems").mockResolvedValue();
+    await router.push("/items?keyword=before");
+    fetch.mockClear();
+
+    const pending = deferred();
+    fetch.mockReturnValue(pending.promise);
+    const wrapper = mount(App, { global: { stubs: { RouterView: true, BaseToasts: true, AppIcon: true } } });
+    const navigation = router.push("/items?keyword=after");
     await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
-    const newNavigation = router.push("/items?keyword=new");
-    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
-    first.resolve();
-    await oldNavigation;
+    await nextTick();
+    expect(wrapper.find('[role="status"]').exists()).toBe(true);
+    expect(wrapper.find("[inert]").exists()).toBe(true);
     expect(useUiStore().navigating).toBe(true);
-    second.resolve();
-    await newNavigation;
+
+    pending.resolve();
+    await navigation;
     expect(useUiStore().navigating).toBe(false);
+    wrapper.unmount();
 });
 
 it("ルートの読み込み自体に失敗した場合も表示を解除する", async () => {

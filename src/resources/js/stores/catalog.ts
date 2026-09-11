@@ -144,9 +144,8 @@ export const useCatalogStore = defineStore("catalog", {
 
                 if (tqItemNo === "") setSkuError(row.key, "tq_item_no", "必須です");
                 if (tqColorNo === "") setSkuError(row.key, "tq_color_no", "必須です");
-                if (tqSize === "") setSkuError(row.key, "tq_size", "必須です");
 
-                if (tqItemNo !== "" && tqColorNo !== "" && tqSize !== "") {
+                if (tqItemNo !== "" && tqColorNo !== "") {
                     const tqKey = [tqItemNo, tqColorNo, tqSize].join("").toLowerCase();
                     if (seenTqKey.has(tqKey)) {
                         setSkuError(row.key, "tq_item_no", "TQキーが入力内で重複しています");

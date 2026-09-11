@@ -38,22 +38,22 @@ class CsvImportTest extends TestCase
     public function test_import_preserves_zeros_and_omitted_statuses_and_can_be_repeated(): void
     {
         $this->prepare();
-        $summary = $this->validateRows([$this->row(), $this->row(['sku_code' => '0001-01-05', 'tq_size' => '05', 'item_status' => 'inactive'])])->assertOk()->assertJsonPath('error_count', 0);
+        $summary = $this->validateRows([$this->row(['tq_size' => '']), $this->row(['sku_code' => '0001-01-05', 'tq_size' => '05', 'item_status' => '0', 'sku_status' => '0'])])->assertOk()->assertJsonPath('error_count', 0);
         $this->assertDatabaseCount('items', 0);
         $token = $summary->json('validation_id');
         $this->postJson('/api/admin/csv/import', ['validation_id' => $token])->assertOk()->assertJsonPath('created_items', 1)->assertJsonPath('created_skus', 2);
         $this->assertDatabaseHas('items', ['item_no' => '0001', 'is_active' => false]);
-        $this->assertDatabaseHas('skus', ['sku_code' => '0001-01-00', 'tq_color_no' => '01', 'tq_size' => '00', 'is_active' => true]);
+        $this->assertDatabaseHas('skus', ['sku_code' => '0001-01-00', 'tq_color_no' => '01', 'tq_size' => '', 'is_active' => true]);
         $this->postJson('/api/admin/csv/import', ['validation_id' => $token])->assertOk();
         $this->assertDatabaseCount('skus', 2);
         $this->get('/api/admin/csv/'.$token.'/result')->assertOk()->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
-        $this->validateRows([$this->row()])->assertOk()->assertJsonPath('unchanged_count', 1);
+        $this->validateRows([$this->row(['tq_size' => ''])])->assertOk()->assertJsonPath('unchanged_count', 1);
     }
 
     public function test_conflicting_item_states_and_duplicate_keys_block_the_entire_file(): void
     {
         $this->prepare();
-        $summary = $this->validateRows([$this->row(['item_status' => 'active']), $this->row(['item_status' => 'inactive'])])->assertOk();
+        $summary = $this->validateRows([$this->row(['item_status' => '1']), $this->row(['item_status' => '0'])])->assertOk();
         $this->assertGreaterThan(0, $summary->json('error_count'));
         $this->postJson('/api/admin/csv/import', ['validation_id' => $summary->json('validation_id')])->assertUnprocessable();
         $this->assertDatabaseCount('items', 0);
@@ -84,6 +84,7 @@ class CsvImportTest extends TestCase
         $this->prepare();
         $this->postJson('/api/admin/csv/validate', ['file' => UploadedFile::fake()->createWithContent('broken.csv', "item_no\n\"unterminated")])->assertUnprocessable();
         $this->validateRows([$this->row(['brand_name' => '不明'])])->assertOk()->assertJsonPath('errors.0.column', 'brand_name');
+        $this->validateRows([$this->row(['item_status' => 'active', 'sku_status' => 'inactive'])])->assertOk()->assertJsonPath('error_count', 1)->assertJsonCount(2, 'errors')->assertJsonPath('errors.0.column', 'item_status')->assertJsonPath('errors.1.column', 'sku_status');
         $this->get('/api/admin/csv/template')->assertOk()->assertDontSee('memo');
     }
 

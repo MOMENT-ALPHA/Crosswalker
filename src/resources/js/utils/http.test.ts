@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { csrf, http, resetCsrf } from "@/utils/http";
+import { csrf, downloadFromApi, errorMessage, http, resetCsrf } from "@/utils/http";
 
 beforeEach(() => resetCsrf());
 afterEach(() => vi.restoreAllMocks());
@@ -42,4 +42,14 @@ it("リセット前の遅い応答でトークンを上書きしない", async (
     resolve({ data: { token: "old" } });
     await old;
     expect(http.defaults.headers.common["X-CSRF-TOKEN"]).toBe("new");
+});
+
+it("CSVダウンロードのJSONエラーから検索条件を絞り込む案内を取得できる", async () => {
+    const message = "CSV取込の上限（10000行）を超えています。検索条件を絞り込んでください。";
+    const data = new Blob([], { type: "application/json" });
+    Object.defineProperty(data, "text", { value: async () => JSON.stringify({ errors: { export: [message] } }) });
+    const error = { isAxiosError: true, response: { status: 422, data } };
+    vi.spyOn(http, "get").mockRejectedValue(error);
+    await expect(downloadFromApi("/items/export", "crosswalker_items.csv")).rejects.toBe(error);
+    expect(errorMessage(error)).toBe(message);
 });

@@ -44,13 +44,21 @@ class CatalogApiTest extends TestCase
         $this->assertDatabaseCount('items', 0);
     }
 
-    public function test_invalid_sku_does_not_partially_save_item(): void
+    public function test_sku_without_tq_size_can_be_created_and_duplicate_empty_size_key_is_rejected(): void
     {
         $this->actingAs(User::factory()->create());
         $data = $this->payload();
         $data['skus'][0]['tq_size'] = '';
-        $this->postJson('/api/admin/items', $data)->assertUnprocessable()->assertJsonValidationErrors('skus.0.tq_size');
-        $this->assertDatabaseCount('items', 0);
+        $this->postJson('/api/admin/items', $data)
+            ->assertCreated()
+            ->assertJsonPath('data.skus.0.tq_size', '');
+        $this->assertDatabaseHas('skus', ['sku_code' => '00001-01-00', 'tq_size' => '']);
+
+        $data['item_no'] = '00002';
+        $data['skus'][0]['sku_code'] = '00002-01-00';
+        $this->postJson('/api/admin/items', $data)->assertUnprocessable()->assertJsonValidationErrors('skus.0.tq_item_no');
+        $this->assertDatabaseCount('items', 1);
+        $this->assertDatabaseCount('skus', 1);
     }
 
     public function test_rejects_foreign_sku_ids_and_duplicate_keys_without_changing_data(): void

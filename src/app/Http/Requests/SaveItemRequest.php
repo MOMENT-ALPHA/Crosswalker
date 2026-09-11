@@ -11,6 +11,20 @@ class SaveItemRequest extends FormRequest
         return $this->user() !== null;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $skus = $this->input('skus');
+        if (! is_array($skus)) {
+            return;
+        }
+        $this->merge([
+            'skus' => array_map(
+                fn ($sku) => is_array($sku) ? [...$sku, 'tq_size' => $sku['tq_size'] ?? ''] : $sku,
+                $skus,
+            ),
+        ]);
+    }
+
     public function rules(): array
     {
         return [
@@ -26,7 +40,7 @@ class SaveItemRequest extends FormRequest
             'skus.*.child_asin' => ['nullable', 'string', 'max:255'],
             'skus.*.tq_item_no' => ['required', 'string', 'max:255'],
             'skus.*.tq_color_no' => ['required', 'string', 'max:255'],
-            'skus.*.tq_size' => ['required', 'string', 'max:255'],
+            'skus.*.tq_size' => ['nullable', 'string', 'max:255'],
             'skus.*.is_active' => ['required', 'boolean'],
         ];
     }

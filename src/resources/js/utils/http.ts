@@ -54,7 +54,16 @@ http.interceptors.response.use(
 );
 
 export async function downloadFromApi(path: string, filename: string): Promise<void> {
-    const { data } = await http.get<Blob>(path, { responseType: "blob" });
+    const { data } = await http.get<Blob>(path, { responseType: "blob" }).catch(async (error: unknown) => {
+        if (axios.isAxiosError(error) && error.response?.data instanceof Blob && error.response.data.type.includes("json")) {
+            try {
+                error.response.data = JSON.parse(await error.response.data.text());
+            } catch {
+                // JSONでないエラー応答は共通のエラーメッセージに委ねる。
+            }
+        }
+        throw error;
+    });
     const url = URL.createObjectURL(data);
     const link = document.createElement("a");
     link.href = url;

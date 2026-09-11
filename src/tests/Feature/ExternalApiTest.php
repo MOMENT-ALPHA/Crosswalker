@@ -31,10 +31,10 @@ class ExternalApiTest extends TestCase
     {
         $this->enable();
         $item = Item::factory()->create(['item_no' => '00001', 'parent_asin' => 'PARENT', 'is_active' => false]);
-        $sku = Sku::factory()->for($item)->create(['sku_code' => '00001-01-00', 'child_asin' => 'CHILD', 'tq_item_no' => '00001', 'tq_color_no' => '01', 'tq_size' => '00']);
+        $sku = Sku::factory()->for($item)->create(['sku_code' => '00001-01-00', 'child_asin' => 'CHILD', 'tq_item_no' => '00001', 'tq_color_no' => '01', 'tq_size' => '']);
         $this->withToken('test-key')->getJson('/api/v1/items/00001')->assertOk()->assertJsonPath('item.status', 'inactive')->assertJsonPath('item.skus.0.status', 'inactive');
         $this->getJson('/api/v1/skus/00001-01-00')->assertOk()->assertJsonPath('sku.tq_color_no', '01');
-        $this->getJson('/api/v1/tq-skus?tq_item_no=00001&tq_color_no=01&tq_size=00')->assertOk()->assertJsonPath('sku.tq_size', '00');
+        $this->getJson('/api/v1/tq-skus?tq_item_no=00001&tq_color_no=01&')->assertOk()->assertJsonPath('sku.tq_size', '');
         $this->getJson('/api/v1/asins/PARENT')->assertOk()->assertJsonPath('data.0.item_no', '00001');
         $this->getJson('/api/v1/asins/CHILD')->assertOk()->assertJsonCount(1, 'data');
         $this->getJson('/api/v1/tq-skus')->assertBadRequest();

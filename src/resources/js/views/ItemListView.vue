@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import AppIcon from "@/componets/AppIcon.vue";
 import BaseBadge from "@/componets/ui/BaseBadge.vue";
@@ -11,7 +11,7 @@ import BasePagination from "@/componets/ui/BasePagination.vue";
 import BaseSelect from "@/componets/ui/BaseSelect.vue";
 import { useCatalogStore } from "@/stores/catalog";
 import { useUiStore } from "@/stores/ui";
-import { errorMessage } from "@/utils/http";
+import { downloadFromApi, errorMessage } from "@/utils/http";
 import { searchCatalog } from "@/utils/catalogSearch";
 import { ITEMS_PER_PAGE } from "@/utils/consts";
 import { formatDateTime, toSelectOptions } from "@/utils/helper";
@@ -22,7 +22,7 @@ const router = useRouter();
 const catalog = useCatalogStore();
 const ui = useUiStore();
 
-/** 検索フォームの入力値（変更時にURLクエリへ自動反映する） */
+/** 検索フォームの入力値（検索実行時にURLクエリへ反映する） */
 const form = reactive({
     keyword: "",
     brand_id: null as number | null,
@@ -47,6 +47,7 @@ const applied = computed(() => ({
 
 const result = computed(() => catalog.searchResult);
 const updating = ref(false);
+const exporting = ref(false);
 const skuMatchesByItem = computed(() => new Map(searchCatalog(result.value.rows, applied.value.keyword).map((match) => [match.item.id, match.matchedSkuIds])));
 const brandOptions = computed(() => toSelectOptions(catalog.brands));
 const categoryOptions = computed(() => toSelectOptions(catalog.categories));
@@ -62,7 +63,9 @@ const hasCondition = computed(
 
 watch(
     applied,
-    (value) => {
+    (value, previous) => {
+        const canSync = !previous || (form.keyword === previous.keyword && form.brand_id === previous.brand_id && form.category_id === previous.category_id && form.status === previous.status);
+        if (!canSync) return;
         form.keyword = value.keyword;
         form.brand_id = value.brand_id;
         form.category_id = value.category_id;
@@ -70,19 +73,6 @@ watch(
     },
     { immediate: true },
 );
-
-let searchTimer: ReturnType<typeof window.setTimeout> | undefined;
-watch(
-    form,
-    () => {
-        window.clearTimeout(searchTimer);
-        const current = applied.value;
-        if (form.keyword === current.keyword && form.brand_id === current.brand_id && form.category_id === current.category_id && form.status === current.status) return;
-        searchTimer = window.setTimeout(() => applySearch(), 250);
-    },
-    { deep: true },
-);
-onBeforeUnmount(() => window.clearTimeout(searchTimer));
 
 function applySearch(page = 1) {
     router.replace({
@@ -98,8 +88,18 @@ function applySearch(page = 1) {
     });
 }
 
+function changePage(page: number) {
+    const query = { ...route.query };
+    if (page > 1) query.page = String(page);
+    else delete query.page;
+    router.replace({ name: "items", query });
+}
+
 function clearSearch() {
-    window.clearTimeout(searchTimer);
+    form.keyword = "";
+    form.brand_id = null;
+    form.category_id = null;
+    form.status = "active";
     router.push({ name: "items" });
 }
 
@@ -118,6 +118,23 @@ async function toggleItemStatus(row: ItemListRow) {
     }
 }
 
+async function exportCsv() {
+    if (exporting.value) return;
+    exporting.value = true;
+    try {
+        const params = new window.URLSearchParams();
+        const { keyword, brand_id, category_id, status, filter } = applied.value;
+        for (const [key, value] of Object.entries({ keyword, brand_id, category_id, status, filter })) {
+            if (value !== null && value !== "") params.set(key, String(value));
+        }
+        await downloadFromApi(`/items/export?${params}`, "crosswalker_items.csv");
+    } catch (error) {
+        ui.notify(errorMessage(error), "error");
+    } finally {
+        exporting.value = false;
+    }
+}
+
 function removeQuickFilter() {
     const query = { ...route.query };
     delete query.filter;
@@ -128,14 +145,14 @@ function removeQuickFilter() {
 
 <template>
     <div class="space-y-5">
-        <BaseCard title="検索条件" description="品番コード・ASIN・SKU・TQ品番・カラーNo・サイズを横断して自動検索します。">
+        <BaseCard title="検索条件" description="品番コード・ASIN・SKU・TQ品番・カラーNo・サイズを横断して検索します。">
             <template #actions>
                 <BaseButton variant="primary" icon="add" size="sm" @click="$router.push({ name: 'item-create' })">品番新規登録</BaseButton>
             </template>
 
-            <div class="grid gap-4 md:grid-cols-12">
+            <form class="grid gap-4 md:grid-cols-12" @submit.prevent="applySearch()">
                 <div class="md:col-span-3">
-                    <BaseInput v-model="form.keyword" label="キーワード" placeholder="ASIN、TQ品番、SKUなどを入力" hint="入力すると自動的に検索されます。" />
+                    <BaseInput v-model="form.keyword" label="キーワード" placeholder="ASIN、TQ品番、SKUなどを入力" />
                 </div>
                 <div class="md:col-span-3">
                     <BaseSelect v-model="form.brand_id" label="ブランド" placeholder="すべて" :options="brandOptions" />
@@ -147,9 +164,10 @@ function removeQuickFilter() {
                     <BaseSelect v-model="form.status" label="状態" :options="statusOptions" />
                 </div>
                 <div class="flex items-center gap-2 md:col-span-12">
+                    <BaseButton type="submit" variant="primary" icon="search">検索</BaseButton>
                     <BaseButton v-if="hasCondition" variant="secondary" icon="close" @click="clearSearch">検索条件をクリア</BaseButton>
                 </div>
-            </div>
+            </form>
         </BaseCard>
 
         <div v-if="applied.filter" class="flex flex-wrap items-center gap-2">
@@ -167,7 +185,10 @@ function removeQuickFilter() {
         <BaseCard :padded="false">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-5 py-3">
                 <h2 class="text-sm font-semibold text-slate-900">品番一覧</h2>
-                <span class="text-xs text-slate-500">{{ result.total }}件</span>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-slate-500">{{ result.total }}件</span>
+                    <BaseButton size="sm" variant="secondary" icon="download" :loading="exporting" title="検索結果の全SKUをCSV取込形式で出力" @click="exportCsv">CSV出力</BaseButton>
+                </div>
             </div>
 
             <div v-if="result.rows.length > 0" class="overflow-x-auto">
@@ -192,9 +213,9 @@ function removeQuickFilter() {
                                         row.item_no
                                     }}</RouterLink>
                                 </td>
-                                <td class="px-5 py-3"
-                                    ><BaseBadge :tone="row.is_active ? 'success' : 'neutral'">{{ row.is_active ? "有効" : "無効" }}</BaseBadge></td
-                                >
+                                <td class="px-5 py-3">
+                                    <BaseBadge :tone="row.is_active ? 'success' : 'neutral'">{{ row.is_active ? "有効" : "無効" }}</BaseBadge>
+                                </td>
                                 <td class="px-5 py-3 text-slate-700">{{ row.brand_name }}</td>
                                 <td class="px-5 py-3 text-slate-700">{{ row.category_name }}</td>
                                 <td class="px-5 py-3">
@@ -267,7 +288,7 @@ function removeQuickFilter() {
                 <BaseButton v-else variant="primary" icon="add" @click="$router.push({ name: 'item-create' })">品番新規登録</BaseButton>
             </BaseEmpty>
 
-            <BasePagination v-if="result.rows.length > 0" :page="result.page" :total-pages="result.totalPages" :total="result.total" :per-page="ITEMS_PER_PAGE" @change="applySearch" />
+            <BasePagination v-if="result.rows.length > 0" :page="result.page" :total-pages="result.totalPages" :total="result.total" :per-page="ITEMS_PER_PAGE" @change="changePage" />
         </BaseCard>
     </div>
 </template>

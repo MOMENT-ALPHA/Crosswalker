@@ -15,7 +15,7 @@ class CsvImportService
 {
     public const COLUMNS = ['item_no', 'category_name', 'brand_name', 'parent_asin', 'item_status', 'sku_code', 'child_asin', 'sku_status', 'tq_item_no', 'tq_color_no', 'tq_size'];
 
-    private const REQUIRED = ['item_no', 'category_name', 'brand_name', 'sku_code', 'tq_item_no', 'tq_color_no', 'tq_size'];
+    private const REQUIRED = ['item_no', 'category_name', 'brand_name', 'sku_code', 'tq_item_no', 'tq_color_no'];
 
     public function parse(string $text): array
     {
@@ -133,9 +133,9 @@ class CsvImportService
             foreach (self::COLUMNS as $column) {
                 $rules[$column] = [in_array($column, self::REQUIRED, true) ? 'required' : 'nullable', 'string', 'max:255'];
             }
-            $rules['item_status'][] = 'in:active,inactive';
-            $rules['sku_status'][] = 'in:active,inactive';
-            $validator = Validator::make($row, $rules, ['required' => '必須項目です。', 'max' => '255文字以内で入力してください。', 'in' => 'activeまたはinactiveを指定してください。']);
+            $rules['item_status'][] = 'in:1,0';
+            $rules['sku_status'][] = 'in:1,0';
+            $validator = Validator::make($row, $rules, ['required' => '必須項目です。', 'max' => '255文字以内で入力してください。', 'in' => '1（有効）または0（無効）を指定してください。']);
             foreach ($validator->errors()->messages() as $column => $messages) {
                 $add($line, $column, $messages[0]);
             }
@@ -181,11 +181,11 @@ class CsvImportService
             $skuPlans[] = ['model' => $sku, 'item_key' => $key, 'line' => $line, 'attributes' => [
                 'sku_code' => $row['sku_code'], 'child_asin' => $row['child_asin'] === '' ? null : $row['child_asin'],
                 'tq_item_no' => $row['tq_item_no'], 'tq_color_no' => $row['tq_color_no'], 'tq_size' => $row['tq_size'],
-                'is_active' => $row['sku_status'] === '' ? ($sku?->is_active ?? true) : $row['sku_status'] === 'active',
+                'is_active' => $row['sku_status'] === '' ? ($sku?->is_active ?? true) : $row['sku_status'] === '1',
             ]];
         }
         foreach ($groups as &$group) {
-            $group['attributes']['is_active'] = $group['status'] === null ? ($group['model']?->is_active ?? true) : $group['status'] === 'active';
+            $group['attributes']['is_active'] = $group['status'] === null ? ($group['model']?->is_active ?? true) : $group['status'] === '1';
             $group['changed'] = ! $group['model'] || $group['model']->fill($group['attributes'])->isDirty();
         }
         unset($group);
@@ -253,15 +253,15 @@ class CsvImportService
 
     private function tqKey(array $row): string
     {
-        return json_encode(array_map(fn ($column) => mb_strtolower($row[$column]), ['tq_item_no', 'tq_color_no', 'tq_size']));
+        return json_encode(array_map(fn ($column) => mb_strtolower((string) ($row[$column] ?? '')), ['tq_item_no', 'tq_color_no', 'tq_size']));
     }
 
-    public function csv(array $rows): string
+    public function csv(array $rows, bool $escapeFormulas = true): string
     {
         $stream = fopen('php://temp', 'r+');
         fwrite($stream, "\xEF\xBB\xBF");
         foreach ($rows as $row) {
-            $safe = array_map(fn ($value) => preg_match('/^[=+@\-\t\r]/', (string) $value) ? "'".$value : $value, $row);
+            $safe = array_map(fn ($value) => $escapeFormulas && preg_match('/^[=+@\-\t\r]/', (string) $value) ? "'".$value : $value, $row);
             fputcsv($stream, $safe, ',', '"', '', "\r\n");
         }
         rewind($stream);

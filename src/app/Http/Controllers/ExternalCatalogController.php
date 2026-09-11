@@ -30,9 +30,17 @@ class ExternalCatalogController extends Controller
 
     public function tq(Request $request): JsonResponse
     {
-        $data = $request->validate(['tq_item_no' => ['required', 'string', 'max:255'], 'tq_color_no' => ['required', 'string', 'max:255'], 'tq_size' => ['required', 'string', 'max:255']]);
+        $data = $request->validate([
+            'tq_item_no' => ['required', 'string', 'max:255'],
+            'tq_color_no' => ['required', 'string', 'max:255'],
+            'tq_size' => ['nullable', 'string', 'max:255'],
+        ]);
+        $sku = Sku::where('tq_item_no', $data['tq_item_no'])
+            ->where('tq_color_no', $data['tq_color_no'])
+            ->where('tq_size', $data['tq_size'] ?? '')
+            ->firstOrFail();
 
-        return $this->skuResponse(Sku::where($data)->firstOrFail());
+        return $this->skuResponse($sku);
     }
 
     public function asin(Request $request, string $asin): AnonymousResourceCollection

@@ -110,4 +110,17 @@ describe("catalog API integration", () => {
         expect(catalog.items).toEqual([current]);
         expect(catalog.lastSearch.keyword).toBe("");
     });
+
+    it("TQサイズが空欄でも入力検証を通す", () => {
+        const catalog = useCatalogStore();
+        const item = createSeedItems()[0]!;
+        const values: ItemFormValues = {
+            ...item,
+            skus: [{ ...item.skus[0]!, key: "size-less", tq_size: "" }],
+        };
+
+        const result = catalog.validateItemForm(values, null);
+        expect(result.skus["size-less"]?.tq_size).toBeUndefined();
+        expect(result.global).toEqual([]);
+    });
 });

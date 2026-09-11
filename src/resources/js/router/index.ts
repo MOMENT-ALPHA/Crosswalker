@@ -72,9 +72,11 @@ const router = createRouter({
 
 let navigationVersion = 0;
 let loadingRoute: RouteLocationNormalized | undefined;
-router.beforeEach(async (to) => {
+router.beforeEach(async (to, from) => {
+    const isItemsQueryUpdate = to.name === "items" && from.name === "items";
+    const ui = useUiStore();
     loadingRoute = to;
-    useUiStore().navigating = true;
+    ui.navigating = true;
     const version = ++navigationVersion;
     const isCurrent = () => version === navigationVersion;
     const auth = useAuthStore();
@@ -117,8 +119,9 @@ router.beforeEach(async (to) => {
         if (to.name === "settings") await catalog.fetchApiSettings(isCurrent);
     } catch (error) {
         if (!isCurrent()) return false;
-        catalog.loadError = errorMessage(error);
-        useUiStore().notify(catalog.loadError, "error");
+        const message = errorMessage(error);
+        if (!isItemsQueryUpdate) catalog.loadError = message;
+        ui.notify(message, "error");
     }
     return isCurrent();
 });
