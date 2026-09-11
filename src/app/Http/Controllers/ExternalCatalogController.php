@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LookupItemsRequest;
 use App\Http\Requests\SearchItemsRequest;
 use App\Http\Resources\ExternalItemResource;
 use App\Models\Item;
@@ -16,6 +17,14 @@ class ExternalCatalogController extends Controller
     public function index(SearchItemsRequest $request, CatalogService $catalog): AnonymousResourceCollection
     {
         return ExternalItemResource::collection($catalog->search($request->validated())->paginate($request->integer('per_page', 10)));
+    }
+
+    public function lookup(LookupItemsRequest $request): AnonymousResourceCollection
+    {
+        return ExternalItemResource::collection(Item::with(['brand', 'category', 'skus'])
+            ->whereIn('item_no', $request->validated('item_nos'))
+            ->orderBy('id')
+            ->get());
     }
 
     public function item(string $itemNo): JsonResponse

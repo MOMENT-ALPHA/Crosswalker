@@ -42,6 +42,60 @@ class ExternalApiTest extends TestCase
         $this->assertDatabaseHas('skus', ['id' => $sku->id, 'is_active' => true]);
     }
 
+    public function test_batch_lookup_returns_only_matching_items_with_all_skus(): void
+    {
+        $this->enable();
+        $first = Item::factory()->create(['item_no' => '00001', 'is_active' => false]);
+        Sku::factory()->for($first)->create(['sku_code' => '00001-01', 'is_active' => true]);
+        $second = Item::factory()->create(['item_no' => '00002']);
+        Sku::factory()->for($second)->create(['is_active' => false]);
+        Item::factory()->create(['item_no' => '000010']);
+
+        $response = $this->withToken('test-key')->postJson('/api/v1/items/lookup', [
+            'item_nos' => ['00002', 'missing', '00001', '00001'],
+        ])->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.item_no', '00001')
+            ->assertJsonPath('data.0.status', 'inactive')
+            ->assertJsonPath('data.0.skus.0.sku_code', '00001-01')
+            ->assertJsonPath('data.0.skus.0.status', 'inactive')
+            ->assertJsonPath('data.1.item_no', '00002')
+            ->assertJsonPath('data.1.skus.0.status', 'inactive')
+            ->assertJsonMissingPath('meta');
+        $single = $this->getJson('/api/v1/items/00001')->assertOk();
+        $this->assertSame($single->json('item'), $response->json('data.0'));
+        $this->postJson('/api/v1/items/lookup', ['item_nos' => ['missing']])
+            ->assertOk()->assertExactJson(['data' => []]);
+    }
+
+    public function test_batch_lookup_validates_the_item_number_list(): void
+    {
+        $this->enable();
+        $this->withToken('test-key');
+        foreach ([[], ['item_nos' => []], ['item_nos' => '00001'], ['item_nos' => [1]],
+            ['item_nos' => ['']], ['item_nos' => [null]], ['item_nos' => [['00001']]],
+            ['item_nos' => ['key' => '00001']], ['item_nos' => [str_repeat('a', 256)]],
+            ['item_nos' => array_fill(0, 101, '00001')]] as $payload) {
+            $this->postJson('/api/v1/items/lookup', $payload)->assertBadRequest()->assertJsonStructure(['message', 'errors']);
+        }
+        $codes = array_map(fn ($i) => sprintf('%05d', $i), range(1, 100));
+        foreach ($codes as $code) {
+            Item::factory()->create(['item_no' => $code]);
+        }
+        $this->postJson('/api/v1/items/lookup', ['item_nos' => $codes])->assertOk()->assertJsonCount(100, 'data');
+    }
+
+    public function test_batch_lookup_requires_enabled_state_key_and_allowed_ip(): void
+    {
+        $payload = ['item_nos' => ['00001']];
+        $this->postJson('/api/v1/items/lookup', $payload)->assertForbidden();
+        $this->enable();
+        $this->postJson('/api/v1/items/lookup', $payload)->assertUnauthorized();
+        $this->withToken('wrong')->postJson('/api/v1/items/lookup', $payload)->assertUnauthorized();
+        $this->withToken('test-key')->postJson('/api/v1/items/lookup', $payload)->assertOk();
+        $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.1'])
+            ->postJson('/api/v1/items/lookup', $payload)->assertForbidden();
+    }
+
     public function test_rotated_key_is_revoked_immediately(): void
     {
         $this->enable();

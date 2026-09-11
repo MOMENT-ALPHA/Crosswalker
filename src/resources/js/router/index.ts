@@ -64,6 +64,12 @@ const router = createRouter({
                     component: () => import("@/views/SettingsView.vue"),
                     meta: { title: "サイト設定", screenId: "SCR-030" },
                 },
+                {
+                    path: "api-reference",
+                    name: "api-reference",
+                    component: () => import("@/views/ApiReferenceView.vue"),
+                    meta: { title: "APIリファレンス", screenId: "SCR-031" },
+                },
             ],
         },
         { path: "/:pathMatch(.*)*", redirect: { name: "dashboard" } },

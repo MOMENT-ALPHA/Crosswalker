@@ -254,9 +254,12 @@ async function copyKey() {
             <div class="grid gap-5 lg:grid-cols-2">
                 <BaseCard title="API有効状態" description="外部システムからの参照APIの利用可否を切り替えます。">
                     <BaseToggle v-model="catalog.apiSettings.enabled" label="外部APIを有効にする" description="有効にする場合は、許可IPアドレスまたはCIDRを1件以上登録してください。" />
-                    <div class="mt-4 flex items-center gap-2 border-t border-slate-100 pt-4">
-                        <BaseBadge :tone="catalog.apiSettings.enabled ? 'success' : 'neutral'">{{ catalog.apiSettings.enabled ? "有効" : "無効" }}</BaseBadge>
-                        <span class="text-xs text-slate-500">ベースURL: <span class="font-mono">/api/v1</span></span>
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                        <div class="flex items-center gap-2">
+                            <BaseBadge :tone="catalog.apiSettings.enabled ? 'success' : 'neutral'">{{ catalog.apiSettings.enabled ? "有効" : "無効" }}</BaseBadge>
+                            <span class="text-xs text-slate-500">ベースURL: <span class="font-mono">/api/v1</span></span>
+                        </div>
+                        <BaseButton size="sm" variant="ghost" icon="api" @click="$router.push({ name: 'api-reference' })">APIリファレンス</BaseButton>
                     </div>
                 </BaseCard>
 

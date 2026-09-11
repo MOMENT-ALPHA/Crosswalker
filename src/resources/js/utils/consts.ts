@@ -8,6 +8,7 @@ export const NAV_ITEMS = [
     { name: "dashboard", label: "ダッシュボード", icon: "dashboard" },
     { name: "items", label: "品番一覧", icon: "inventory_2" },
     { name: "csv-import", label: "CSV取込", icon: "csv" },
+    { name: "api-reference", label: "APIリファレンス", icon: "api" },
     { name: "settings", label: "サイト設定", icon: "settings" },
 ] as const;
 
