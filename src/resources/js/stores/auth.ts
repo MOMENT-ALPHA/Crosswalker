@@ -12,12 +12,11 @@ export const useAuthStore = defineStore("auth", {
             let pending = restorations.get(this);
             if (!pending) {
                 pending = (async () => {
-                    try {
-                        const { data } = await http.get<{ user: { login_id: string } }>("/me");
+                    const { data } = await http.get<{ user: { login_id: string } | null }>("/session");
+                    if (data.user) {
                         this.loginId = data.user.login_id;
                         this.authenticated = true;
-                    } catch (error) {
-                        if (!axios.isAxiosError(error) || error.response?.status !== 401) throw error;
+                    } else {
                         this.$reset();
                     }
                     this.initialized = true;

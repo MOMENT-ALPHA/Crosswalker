@@ -14,13 +14,16 @@ class AuthenticationTest extends TestCase
     public function test_login_uses_login_id_and_logout_invalidates_authentication(): void
     {
         $user = User::factory()->create(['login_id' => 'operator', 'password' => 'valid-password']);
+        $this->getJson('/api/admin/session')->assertOk()->assertJsonPath('user', null);
         $this->getJson('/api/admin/me')->assertUnauthorized();
         $this->postJson('/api/admin/login', ['login_id' => 'operator', 'password' => 'wrong'])->assertUnauthorized();
         $this->postJson('/api/admin/login', ['login_id' => 'operator', 'password' => 'valid-password'])->assertOk()->assertJsonPath('user.login_id', 'operator')->assertJsonMissingPath('user.password');
         $this->assertAuthenticatedAs($user);
+        $this->getJson('/api/admin/session')->assertOk()->assertJsonPath('user.login_id', 'operator');
         $this->getJson('/api/admin/me')->assertOk();
         $this->postJson('/api/admin/logout')->assertNoContent();
         $this->assertGuest();
+        $this->getJson('/api/admin/session')->assertOk()->assertJsonPath('user', null);
     }
 
     public function test_login_is_rate_limited(): void

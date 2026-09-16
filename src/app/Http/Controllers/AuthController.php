@@ -25,6 +25,15 @@ class AuthController extends Controller
         return $this->me($request);
     }
 
+    public function session(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'user' => $user?->only(['id', 'login_id', 'name']),
+        ])->header('Cache-Control', 'no-store');
+    }
+
     public function me(Request $request): JsonResponse
     {
         return response()->json(['user' => $request->user()->only(['id', 'login_id', 'name'])])->header('Cache-Control', 'no-store');

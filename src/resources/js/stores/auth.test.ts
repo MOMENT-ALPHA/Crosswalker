@@ -14,8 +14,9 @@ describe("session authentication", () => {
         localStorage.setItem("auth", JSON.stringify({ authenticated: true, loginId: "admin" }));
         const auth = useAuthStore();
         expect(auth.authenticated).toBe(false);
-        vi.mocked(http.get).mockRejectedValue({ isAxiosError: true, response: { status: 401 } });
+        vi.mocked(http.get).mockResolvedValue({ data: { user: null } });
         await auth.restore();
+        expect(http.get).toHaveBeenCalledWith("/session");
         expect(auth.authenticated).toBe(false);
     });
     it("CSRFを取得してログインしサーバーでログアウトする", async () => {
