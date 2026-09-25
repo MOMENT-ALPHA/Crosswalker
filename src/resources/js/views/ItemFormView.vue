@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import AppIcon from "@/componets/AppIcon.vue";
 import BaseAlert from "@/componets/ui/BaseAlert.vue";
@@ -31,6 +31,7 @@ const saving = ref(false);
 const busy = ref(false);
 const initialSnapshot = ref("");
 const skipGuard = ref(false);
+const skuAnimationsEnabled = ref(false);
 
 const deleteOpen = ref(false);
 const leaveOpen = ref(false);
@@ -45,7 +46,7 @@ const pageTitle = computed(() => (mode.value === "edit" ? "品番を編集" : "�
 
 let pendingResolve: ((value: boolean) => void) | null = null;
 
-onMounted(() => {
+onMounted(async () => {
     if (editingId.value !== null) {
         const item = catalog.findItem(editingId.value);
         if (item) {
@@ -69,6 +70,9 @@ onMounted(() => {
 
     initialSnapshot.value = JSON.stringify(form);
     window.addEventListener("beforeunload", onBeforeUnload);
+
+    await nextTick();
+    skuAnimationsEnabled.value = true;
 });
 
 onBeforeUnmount(() => window.removeEventListener("beforeunload", onBeforeUnload));
@@ -282,7 +286,7 @@ async function confirmDelete() {
                             <th class="w-12 px-3 py-2.5"></th>
                         </tr>
                     </thead>
-                    <TransitionGroup name="sku-row" tag="tbody" class="divide-y divide-slate-100">
+                    <TransitionGroup name="sku-row" tag="tbody" class="divide-y divide-slate-100" :css="skuAnimationsEnabled">
                         <tr v-for="(row, index) in form.skus" :key="row.key" class="align-top" :class="errors.skus[row.key] ? 'bg-rose-50/40' : ''">
                             <td class="align-middle px-3 py-2.5 text-xs text-slate-400">{{ index + 1 }}</td>
                             <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.sku_code" size="sm" placeholder="fisi-05-1-10" :error="skuError(row.key, 'sku_code')" /></td>
