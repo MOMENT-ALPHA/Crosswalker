@@ -103,6 +103,15 @@ function removeSkuRow(key: string) {
     delete errors.value.skus[key];
 }
 
+function moveSkuRow(index: number, direction: -1 | 1) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= form.skus.length) return;
+
+    const [row] = form.skus.splice(index, 1);
+    if (!row) return;
+    form.skus.splice(targetIndex, 0, row);
+}
+
 function skuError(key: string, field: string): string {
     return errors.value.skus[key]?.[field as keyof (typeof errors.value.skus)[string]] ?? "";
 }
@@ -254,7 +263,7 @@ async function confirmDelete() {
             </div>
         </BaseCard>
 
-        <BaseCard :title="`SKU（${form.skus.length}行）`" description="1つの品番に複数のSKUを登録できます。SKUとTQキーは1対1です。" :padded="false">
+        <BaseCard :title="`SKU（${form.skus.length}行）`" description="1つの品番に複数のSKUを登録できます。矢印ボタンで表示順を変更できます。" :padded="false">
             <template #actions>
                 <BaseButton size="sm" variant="secondary" icon="add" @click="addSkuRow">SKU行を追加</BaseButton>
             </template>
@@ -273,7 +282,7 @@ async function confirmDelete() {
                             <th class="w-12 px-3 py-2.5"></th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <TransitionGroup name="sku-row" tag="tbody" class="divide-y divide-slate-100">
                         <tr v-for="(row, index) in form.skus" :key="row.key" class="align-top" :class="errors.skus[row.key] ? 'bg-rose-50/40' : ''">
                             <td class="align-middle px-3 py-2.5 text-xs text-slate-400">{{ index + 1 }}</td>
                             <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.sku_code" size="sm" placeholder="fisi-05-1-10" :error="skuError(row.key, 'sku_code')" /></td>
@@ -283,18 +292,38 @@ async function confirmDelete() {
                             <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.tq_color_no" size="sm" placeholder="1" :error="skuError(row.key, 'tq_color_no')" /></td>
                             <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.tq_size" size="sm" placeholder="10" :error="skuError(row.key, 'tq_size')" /></td>
                             <td class="px-3 py-2.5">
-                                <button
-                                    type="button"
-                                    class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-500 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
-                                    :disabled="form.skus.length <= 1"
-                                    aria-label="SKU行を削除"
-                                    @click="removeSkuRow(row.key)"
-                                >
-                                    <AppIcon name="delete" :size="15" />
-                                </button>
+                                <div class="flex items-center gap-1">
+                                    <button
+                                        type="button"
+                                        class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-500 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-30"
+                                        :disabled="index === 0"
+                                        :aria-label="`${index + 1}行目のSKUを上へ移動`"
+                                        @click="moveSkuRow(index, -1)"
+                                    >
+                                        <AppIcon name="arrow_upward" :size="15" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-500 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-30"
+                                        :disabled="index === form.skus.length - 1"
+                                        :aria-label="`${index + 1}行目のSKUを下へ移動`"
+                                        @click="moveSkuRow(index, 1)"
+                                    >
+                                        <AppIcon name="arrow_downward" :size="15" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-500 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
+                                        :disabled="form.skus.length <= 1"
+                                        aria-label="SKU行を削除"
+                                        @click="removeSkuRow(row.key)"
+                                    >
+                                        <AppIcon name="delete" :size="15" />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
-                    </tbody>
+                    </TransitionGroup>
                 </table>
             </div>
 
@@ -342,3 +371,16 @@ async function confirmDelete() {
         </BaseModal>
     </form>
 </template>
+
+<style scoped>
+.sku-row-move {
+    transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sku-row-move {
+        transition: none;
+    }
+}
+</style>

@@ -35,6 +35,25 @@ async function setup() {
 }
 
 describe("品番編集画面のAPI保存", () => {
+    it("上下ボタンでSKUを並び替え、変更後の順番で保存する", async () => {
+        const { wrapper, catalog } = await setup();
+        const item = catalog.items[0]!;
+        vi.spyOn(http, "put").mockResolvedValue({ data: { data: item } });
+
+        expect(wrapper.get('button[aria-label="1行目のSKUを上へ移動"]').attributes("disabled")).toBeDefined();
+        expect(wrapper.get('button[aria-label="4行目のSKUを下へ移動"]').attributes("disabled")).toBeDefined();
+        await wrapper.get('button[aria-label="1行目のSKUを下へ移動"]').trigger("click");
+
+        const skuInputs = wrapper.findAll<HTMLInputElement>('input[placeholder="fisi-05-1-10"]');
+        expect(skuInputs.map((input) => input.element.value)).toEqual(["fisi-05-1-15", "fisi-05-1-10", "fisi-05-2-10", "fisi-05-2-15"]);
+
+        await wrapper.get("form").trigger("submit");
+        await flushPromises();
+
+        const payload = vi.mocked(http.put).mock.calls[0]?.[1] as { skus: { id: number }[] };
+        expect(payload.skus.map((sku) => sku.id)).toEqual([item.skus[1]!.id, item.skus[0]!.id, item.skus[2]!.id, item.skus[3]!.id]);
+    });
+
     it("サーバーのSKUエラーを該当行に表示し入力内容を保持する", async () => {
         const { wrapper, router } = await setup();
         vi.spyOn(http, "put").mockRejectedValue({ isAxiosError: true, response: { status: 422, data: { errors: { "skus.0.tq_size": ["TQキーが既に登録されています。"] } } } });
