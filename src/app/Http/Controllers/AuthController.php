@@ -11,12 +11,17 @@ class AuthController extends Controller
 {
     public function csrf(Request $request): JsonResponse
     {
-        return response()->json(['token' => $request->session()->token()])->header('Cache-Control', 'no-store');
+        return response()->json([
+            'token' => $request->session()->token()
+        ])->header('Cache-Control', 'no-store');
     }
 
     public function login(Request $request): JsonResponse
     {
-        $credentials = $request->validate(['login_id' => ['required', 'string', 'max:255'], 'password' => ['required', 'string', 'max:255']]);
+        $credentials = $request->validate([
+            'login_id' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'max:255']
+        ]);
         if (! Auth::attempt($credentials)) {
             return response()->json(['message' => 'ログインIDまたはパスワードが正しくありません。'], 401);
         }
@@ -36,7 +41,9 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['user' => $request->user()->only(['id', 'login_id', 'name'])])->header('Cache-Control', 'no-store');
+        return response()->json([
+            'user' => $request->user()->only(['id', 'login_id', 'name'])
+        ])->header('Cache-Control', 'no-store');
     }
 
     public function logout(Request $request): Response

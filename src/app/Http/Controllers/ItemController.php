@@ -77,7 +77,7 @@ class ItemController extends Controller
 
     public function destroy(Item $item): Response
     {
-        DB::transaction(fn () => $item->delete());
+        DB::transaction(fn() => $item->delete());
 
         return response()->noContent();
     }
