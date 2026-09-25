@@ -35,6 +35,36 @@ async function setup() {
 }
 
 describe("品番編集画面のAPI保存", () => {
+    it("ドラッグアンドドロップでSKUを並び替える", async () => {
+        const { wrapper } = await setup();
+        const dataTransfer = { effectAllowed: "", dropEffect: "", setData: vi.fn(), setDragImage: vi.fn() };
+
+        const handles = wrapper.findAll<HTMLButtonElement>('button[draggable="true"]');
+        expect(handles).toHaveLength(4);
+        await handles[0]!.trigger("dragstart", { dataTransfer, clientX: 0, clientY: 0 });
+        expect(dataTransfer.setDragImage).toHaveBeenCalledWith(expect.objectContaining({ tagName: "DIV" }), 0, 0);
+        expect(document.body.classList.contains("sku-reordering")).toBe(true);
+        const windowDragOver = new globalThis.Event("dragover", { cancelable: true });
+        Object.defineProperty(windowDragOver, "dataTransfer", { value: dataTransfer });
+        dataTransfer.dropEffect = "";
+        window.dispatchEvent(windowDragOver);
+        expect(windowDragOver.defaultPrevented).toBe(true);
+        expect(dataTransfer.dropEffect).toBe("move");
+        await wrapper.findAll(".sku-row")[1]!.trigger("dragover", { clientY: 1, dataTransfer });
+
+        const skuInputs = wrapper.findAll<HTMLInputElement>('input[placeholder="fisi-05-1-10"]');
+        expect(skuInputs.map((input) => input.element.value)).toEqual(["fisi-05-1-15", "fisi-05-1-10", "fisi-05-2-10", "fisi-05-2-15"]);
+        expect(document.body.classList.contains("sku-reordering")).toBe(true);
+        const dropTarget = wrapper.findAll(".sku-row")[1]!;
+        await dropTarget.trigger("drop", { dataTransfer });
+
+        expect(document.body.classList.contains("sku-reordering")).toBe(false);
+        expect(skuInputs.map((input) => input.element.value)).toEqual(["fisi-05-1-15", "fisi-05-1-10", "fisi-05-2-10", "fisi-05-2-15"]);
+        const dragOverAfterDrop = new globalThis.Event("dragover", { cancelable: true });
+        window.dispatchEvent(dragOverAfterDrop);
+        expect(dragOverAfterDrop.defaultPrevented).toBe(false);
+    });
+
     it("上下ボタンでSKUを並び替え、変更後の順番で保存する", async () => {
         const { wrapper, catalog } = await setup();
         const item = catalog.items[0]!;

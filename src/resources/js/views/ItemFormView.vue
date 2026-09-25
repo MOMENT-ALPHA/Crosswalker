@@ -32,6 +32,7 @@ const busy = ref(false);
 const initialSnapshot = ref("");
 const skipGuard = ref(false);
 const skuAnimationsEnabled = ref(false);
+const draggedSkuKey = ref<string | null>(null);
 
 const deleteOpen = ref(false);
 const leaveOpen = ref(false);
@@ -75,7 +76,12 @@ onMounted(async () => {
     skuAnimationsEnabled.value = true;
 });
 
-onBeforeUnmount(() => window.removeEventListener("beforeunload", onBeforeUnload));
+onBeforeUnmount(() => {
+    window.removeEventListener("beforeunload", onBeforeUnload);
+    window.removeEventListener("dragover", keepSkuDragAllowed);
+    window.removeEventListener("drop", finishSkuDrag);
+    document.body.classList.remove("sku-reordering");
+});
 
 function onBeforeUnload(event: BeforeUnloadEvent) {
     if (!dirty.value || skipGuard.value) return;
@@ -114,6 +120,60 @@ function moveSkuRow(index: number, direction: -1 | 1) {
     const [row] = form.skus.splice(index, 1);
     if (!row) return;
     form.skus.splice(targetIndex, 0, row);
+}
+
+function keepSkuDragAllowed(event: DragEvent) {
+    if (!draggedSkuKey.value) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+}
+
+function startSkuDrag(event: DragEvent, key: string) {
+    draggedSkuKey.value = key;
+    document.body.classList.add("sku-reordering");
+    window.addEventListener("dragover", keepSkuDragAllowed);
+    window.addEventListener("drop", finishSkuDrag);
+    if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", key);
+        const dragImage = document.createElement("div");
+        dragImage.style.position = "fixed";
+        dragImage.style.width = "1px";
+        dragImage.style.height = "1px";
+        dragImage.style.opacity = "0";
+        document.body.appendChild(dragImage);
+        event.dataTransfer.setDragImage(dragImage, 0, 0);
+        window.setTimeout(() => dragImage.remove(), 0);
+    }
+}
+
+function setSkuDropTarget(event: DragEvent, key: string) {
+    const sourceKey = draggedSkuKey.value;
+    if (!sourceKey || sourceKey === key) return;
+
+    const target = event.currentTarget as unknown as { getBoundingClientRect: () => { top: number; height: number } };
+    const bounds = target.getBoundingClientRect();
+    const position = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+
+    const sourceIndex = form.skus.findIndex((row) => row.key === sourceKey);
+    const targetIndex = form.skus.findIndex((row) => row.key === key);
+    if (sourceIndex < 0 || targetIndex < 0) return;
+
+    let insertionIndex = targetIndex + (position === "after" ? 1 : 0);
+    if (sourceIndex < insertionIndex) insertionIndex -= 1;
+    if (sourceIndex === insertionIndex) return;
+
+    const [row] = form.skus.splice(sourceIndex, 1);
+    if (row) form.skus.splice(insertionIndex, 0, row);
+}
+
+function finishSkuDrag(event?: DragEvent) {
+    if (event?.type === "drop") event.preventDefault();
+    draggedSkuKey.value = null;
+    document.body.classList.remove("sku-reordering");
+    window.removeEventListener("dragover", keepSkuDragAllowed);
+    window.removeEventListener("drop", finishSkuDrag);
 }
 
 function skuError(key: string, field: string): string {
@@ -267,7 +327,7 @@ async function confirmDelete() {
             </div>
         </BaseCard>
 
-        <BaseCard :title="`SKU（${form.skus.length}行）`" description="1つの品番に複数のSKUを登録できます。矢印ボタンで表示順を変更できます。" :padded="false">
+        <BaseCard :title="`SKU（${form.skus.length}行）`" description="1つの品番に複数のSKUを登録できます。ドラッグまたは矢印ボタンで表示順を変更できます。" :padded="false">
             <template #actions>
                 <BaseButton size="sm" variant="secondary" icon="add" @click="addSkuRow">SKU行を追加</BaseButton>
             </template>
@@ -276,19 +336,41 @@ async function confirmDelete() {
                 <table class="w-full min-w-225 text-sm">
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs text-slate-500">
-                            <th class="w-10 px-3 py-2.5 font-medium">#</th>
+                            <th class="pl-3 py-2.5 font-medium"></th>
                             <th class="px-3 py-2.5 font-medium">SKUコード<span class="ml-1 text-rose-500">*</span></th>
                             <th class="w-28 px-3 py-2.5 font-medium">状態</th>
                             <th class="px-3 py-2.5 font-medium">子ASIN</th>
                             <th class="px-3 py-2.5 font-medium">TQ品番<span class="ml-1 text-rose-500">*</span></th>
                             <th class="px-3 py-2.5 font-medium">TQカラーNo<span class="ml-1 text-rose-500">*</span></th>
                             <th class="px-3 py-2.5 font-medium">TQサイズ</th>
-                            <th class="w-12 px-3 py-2.5"></th>
+                            <th class="w-32 px-3 py-2.5"><span class="sr-only">操作</span></th>
                         </tr>
                     </thead>
                     <TransitionGroup name="sku-row" tag="tbody" class="divide-y divide-slate-100" :css="skuAnimationsEnabled">
-                        <tr v-for="(row, index) in form.skus" :key="row.key" class="align-top" :class="errors.skus[row.key] ? 'bg-rose-50/40' : ''">
-                            <td class="align-middle px-3 py-2.5 text-xs text-slate-400">{{ index + 1 }}</td>
+                        <tr
+                            v-for="(row, index) in form.skus"
+                            :key="row.key"
+                            class="sku-row align-top"
+                            :class="errors.skus[row.key] ? 'bg-rose-50/40' : ''"
+                            @dragover.prevent="setSkuDropTarget($event, row.key)"
+                            @drop.prevent="finishSkuDrag"
+                        >
+                            <td class="align-middle pl-3 py-2.5">
+                                <div class="flex items-center gap-1.5">
+                                    <button
+                                        type="button"
+                                        draggable="true"
+                                        class="flex h-8 w-8 cursor-grab items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+                                        :aria-label="`${index + 1}行目のSKUをドラッグして並び替え`"
+                                        @dragstart="startSkuDrag($event, row.key)"
+                                        @dragend="finishSkuDrag"
+                                        @keydown.up.prevent="moveSkuRow(index, -1)"
+                                        @keydown.down.prevent="moveSkuRow(index, 1)"
+                                    >
+                                        <AppIcon name="drag_handle" :size="18" />
+                                    </button>
+                                </div>
+                            </td>
                             <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.sku_code" size="sm" placeholder="fisi-05-1-10" :error="skuError(row.key, 'sku_code')" /></td>
                             <td class="align-middle px-3 py-2.5"><BaseToggle v-model="row.is_active" :label="row.is_active ? '有効' : '無効'" /></td>
                             <td class="align-middle px-3 py-2.5"><BaseInput v-model="row.child_asin" size="sm" placeholder="B09EXAMPLE1" :error="skuError(row.key, 'child_asin')" /></td>
@@ -377,6 +459,11 @@ async function confirmDelete() {
 </template>
 
 <style scoped>
+:global(body.sku-reordering),
+:global(body.sku-reordering *) {
+    cursor: grabbing !important;
+}
+
 .sku-row-move {
     transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
